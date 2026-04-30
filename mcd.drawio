@@ -1,0 +1,82 @@
+<mxfile host="65bd71144e">
+    <diagram id="Y0vL9G4vhD3t4ep0LMpP" name="Page-1">
+        <mxGraphModel dx="408" dy="307" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="util" value="UTILISATEUR&#xa;──────────────&#xa;id&#xa;nom&#xa;prenom&#xa;email&#xa;mot_de_passe&#xa;role&#xa;telephone&#xa;penalite&#xa;bloque" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="40" width="180" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="mat" value="MATERIEL&#xa;──────────────&#xa;id&#xa;nom&#xa;numero_serie&#xa;etat&#xa;photo&#xa;description&#xa;date_acquisition&#xa;code_qr" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="40" width="180" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="cat" value="CATEGORIE&#xa;──────────────&#xa;id&#xa;libelle&#xa;description" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="560" y="40" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="dem" value="DEMANDE&#xa;──────────────&#xa;id&#xa;date_demande&#xa;date_debut&#xa;date_fin&#xa;statut&#xa;motif" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="280" width="180" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="lig" value="LIGNE_DEMANDE&#xa;──────────────&#xa;id&#xa;quantite" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="560" y="280" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="emp" value="EMPLACEMENT&#xa;──────────────&#xa;id&#xa;libelle&#xa;latitude&#xa;longitude&#xa;adresse" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="560" y="420" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="res" value="RESTITUTION&#xa;──────────────&#xa;id&#xa;date_retour&#xa;etat_materiel&#xa;observations&#xa;photo" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="480" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="mai" value="MAINTENANCE&#xa;──────────────&#xa;id&#xa;type&#xa;date_signalement&#xa;date_resolution&#xa;statut" style="rounded=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="280" width="180" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="cou" value="COURS&#xa;──────────────&#xa;id&#xa;nom&#xa;description&#xa;niveau" style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d6b656;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="480" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="sea" value="SEANCE&#xa;──────────────&#xa;id&#xa;date&#xa;contenu&#xa;localisation" style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d6b656;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="640" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="fic" value="FICHIER_SEANCE&#xa;──────────────&#xa;id&#xa;nom_fichier&#xa;type&#xa;chemin" style="rounded=1;whiteSpace=wrap;fillColor=#ffe6cc;strokeColor=#d6b656;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="640" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="log" value="LOG&#xa;──────────────&#xa;id&#xa;action&#xa;date" style="rounded=1;whiteSpace=wrap;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;verticalAlign=top;align=left;spacingLeft=6;" vertex="1" parent="1">
+                    <mxGeometry x="560" y="640" width="180" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" value="1,N" edge="1" parent="1" source="util" target="dem">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="N,1" edge="1" parent="1" source="mat" target="cat">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="1,N" edge="1" parent="1" source="mat" target="mai">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="1,N" edge="1" parent="1" source="dem" target="lig">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="N,1" edge="1" parent="1" source="lig" target="mat">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="1,1" edge="1" parent="1" source="dem" target="emp">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="1,1" edge="1" parent="1" source="dem" target="res">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="1,N" edge="1" parent="1" source="util" target="log">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="1,N" edge="1" parent="1" source="cou" target="sea">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="1,N" edge="1" parent="1" source="sea" target="fic">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="0,1" style="dashed=1;" edge="1" parent="1" source="sea" target="dem">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="1,N" edge="1" parent="1" source="util" target="sea">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

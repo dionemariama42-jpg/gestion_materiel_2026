@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% block titre %}Paramètres — UFR SI{% endblock %}
+{% block page_titre %}Paramètres{% endblock %}
+
+{% block contenu %}
+<div class="row g-4">
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body p-0">
+        <a href="#apparence" class="d-flex align-items-center gap-3 p-3 border-bottom
+           text-decoration-none" style="color:var(--primary);">
+          <i class="bi bi-palette"></i>
+          <span style="font-size:14px;">Apparence</span>
+        </a>
+        <a href="#profil" class="d-flex align-items-center gap-3 p-3 border-bottom
+           text-decoration-none text-dark">
+          <i class="bi bi-person"></i>
+          <span style="font-size:14px;">Mon profil</span>
+        </a>
+        <a href="#securite" class="d-flex align-items-center gap-3 p-3 border-bottom
+           text-decoration-none text-dark">
+          <i class="bi bi-shield-lock"></i>
+          <span style="font-size:14px;">Sécurité</span>
+        </a>
+        <a href="#notifications" class="d-flex align-items-center gap-3 p-3 border-bottom
+           text-decoration-none text-dark">
+          <i class="bi bi-bell"></i>
+          <span style="font-size:14px;">Notifications</span>
+        </a>
+        <a href="#langue" class="d-flex align-items-center gap-3 p-3
+           text-decoration-none text-dark">
+          <i class="bi bi-translate"></i>
+          <span style="font-size:14px;">Langue et région</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+
+    <!-- Apparence -->
+    <div class="card mb-4" id="apparence">
+      <div class="card-header">
+        <i class="bi bi-palette me-2"></i>Apparence
+      </div>
+      <div class="card-body">
+        <div class="mb-4">
+          <label class="form-label fw-bold">Thème</label>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="p-3 text-center rounded cursor-pointer theme-option active"
+                   id="theme-clair" onclick="setTheme('clair')"
+                   style="border: 2px solid var(--primary); cursor:pointer; background:white;">
+                <div style="height:60px; background:#f0f4f8; border-radius:8px; margin-bottom:8px;">
+                  <div style="height:12px; background:#1a5276; border-radius:8px 8px 0 0;"></div>
+                </div>
+                <strong style="font-size:13px;">Clair</strong>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 text-center rounded"
+                   id="theme-sombre" onclick="setTheme('sombre')"
+                   style="border: 2px solid #e2e8f0; cursor:pointer; background:white;">
+                <div style="height:60px; background:#1a202c; border-radius:8px; margin-bottom:8px;">
+                  <div style="height:12px; background:#2d3748; border-radius:8px 8px 0 0;"></div>
+                </div>
+                <strong style="font-size:13px;">Sombre</strong>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-3 text-center rounded"
+                   id="theme-auto" onclick="setTheme('auto')"
+                   style="border: 2px solid #e2e8f0; cursor:pointer; background:white;">
+                <div style="height:60px; background:linear-gradient(90deg,#f0f4f8 50%,#1a202c 50%);
+                     border-radius:8px; margin-bottom:8px;"></div>
+                <strong style="font-size:13px;">Automatique</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">Couleur principale</label>
+          <div class="d-flex gap-3 flex-wrap">
+            <div onclick="setCouleur('#1a5276')" title="Bleu marine"
+                 style="width:40px; height:40px; border-radius:50%;
+                 background:#1a5276; cursor:pointer; border:3px solid #1a5276;"></div>
+            <div onclick="setCouleur('#1e8449')" title="Vert"
+                 style="width:40px; height:40px; border-radius:50%;
+                 background:#1e8449; cursor:pointer; border:3px solid transparent;"></div>
+            <div onclick="setCouleur('#6c3483')" title="Violet"
+                 style="width:40px; height:40px; border-radius:50%;
+                 background:#6c3483; cursor:pointer; border:3px solid transparent;"></div>
+            <div onclick="setCouleur('#d35400')" title="Orange"
+                 style="width:40px; height:40px; border-radius:50%;
+                 background:#d35400; cursor:pointer; border:3px solid transparent;"></div>
+            <div onclick="setCouleur('#922b21')" title="Rouge"
+                 style="width:40px; height:40px; border-radius:50%;
+                 background:#922b21; cursor:pointer; border:3px solid transparent;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profil -->
+    <div class="card mb-4" id="profil">
+      <div class="card-header">
+        <i class="bi bi-person me-2"></i>Mon profil
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'modifier_profil' %}">
+          {% csrf_token %}
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="first_name" class="form-control"
+                     value="{{ user.first_name }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nom</label>
+              <input type="text" name="last_name" class="form-control"
+                     value="{{ user.last_name }}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ user.email }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Téléphone</label>
+            <input type="text" name="telephone" class="form-control"
+                   value="{{ user.telephone }}">
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check me-2"></i>Enregistrer
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sécurité -->
+    <div class="card mb-4" id="securite">
+      <div class="card-header">
+        <i class="bi bi-shield-lock me-2"></i>Sécurité
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'changer_mdp' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Mot de passe actuel</label>
+            <input type="password" name="mdp_actuel" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nouveau mot de passe</label>
+            <input type="password" name="nouveau_mdp" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirmer le nouveau mot de passe</label>
+            <input type="password" name="confirmer_mdp" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-lock me-2"></i>Changer le mot de passe
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card mb-4" id="notifications">
+      <div class="card-header">
+        <i class="bi bi-bell me-2"></i>Notifications
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3"
+             style="background:#f8fafc; border-radius:12px;">
+          <div>
+            <strong style="font-size:14px;">Rappels de restitution</strong>
+            <p class="text-muted small mb-0">Recevoir un rappel J-1 et Jour J</p>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3"
+             style="background:#f8fafc; border-radius:12px;">
+          <div>
+            <strong style="font-size:14px;">Nouvelles activités clubs</strong>
+            <p class="text-muted small mb-0">Être notifié des nouvelles activités</p>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center p-3"
+             style="background:#f8fafc; border-radius:12px;">
+          <div>
+            <strong style="font-size:14px;">Statut des demandes</strong>
+            <p class="text-muted small mb-0">Approbation ou refus de demande</p>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" checked>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Langue et région -->
+    <div class="card" id="langue">
+      <div class="card-header">
+        <i class="bi bi-translate me-2"></i>Langue et région
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Langue</label>
+            <select class="form-select" onchange="setLangue(this.value)">
+              <option value="fr" selected>Français</option>
+              <option value="en">English</option>
+              <option value="wo">Wolof</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Pays</label>
+            <select class="form-select">
+              <option value="sn" selected>Sénégal</option>
+              <option value="ml">Mali</option>
+              <option value="gn">Guinée</option>
+              <option value="ci">Côte d'Ivoire</option>
+              <option value="bf">Burkina Faso</option>
+              <option value="cm">Cameroun</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fuseau horaire</label>
+            <select class="form-select">
+              <option value="Africa/Dakar" selected>Africa/Dakar (GMT+0)</option>
+              <option value="Africa/Abidjan">Africa/Abidjan (GMT+0)</option>
+              <option value="Africa/Lagos">Africa/Lagos (GMT+1)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Format de date</label>
+            <select class="form-select">
+              <option value="dd/mm/yyyy" selected>JJ/MM/AAAA</option>
+              <option value="mm/dd/yyyy">MM/JJ/AAAA</option>
+              <option value="yyyy-mm-dd">AAAA-MM-JJ</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary mt-3">
+          <i class="bi bi-check me-2"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setTheme(theme) {
+  localStorage.setItem('theme', theme);
+  document.querySelectorAll('.theme-option, [id^="theme-"]').forEach(el => {
+    el.style.borderColor = '#e2e8f0';
+  });
+  document.getElementById('theme-' + theme).style.borderColor = 'var(--primary)';
+  if (theme === 'sombre') {
+    document.body.style.background = '#1a202c';
+    document.body.style.color = '#e2e8f0';
+    document.querySelectorAll('.card').forEach(c => {
+      c.style.background = '#2d3748';
+      c.style.color = '#e2e8f0';
+    });
+    document.querySelector('.sidebar').style.background =
+      'linear-gradient(180deg, #0d1117 0%, #161b22 100%)';
+    document.querySelector('.topbar').style.background = '#2d3748';
+  } else {
+    document.body.style.background = '#f0f4f8';
+    document.body.style.color = '#2d3748';
+    document.querySelectorAll('.card').forEach(c => {
+      c.style.background = 'white';
+      c.style.color = '#2d3748';
+    });
+    document.querySelector('.sidebar').style.background =
+      'linear-gradient(180deg, #154360 0%, #1a5276 100%)';
+    document.querySelector('.topbar').style.background = 'white';
+  }
+}
+
+function setCouleur(couleur) {
+  document.documentElement.style.setProperty('--primary', couleur);
+  localStorage.setItem('couleur', couleur);
+}
+
+function setLangue(langue) {
+  localStorage.setItem('langue', langue);
+  alert('Langue sauvegardée ! La page va se recharger.');
+  location.reload();
+}
+
+// Appliquer thème sauvegardé
+window.onload = function() {
+  var theme = localStorage.getItem('theme');
+  var couleur = localStorage.getItem('couleur');
+  if (theme) setTheme(theme);
+  if (couleur) setCouleur(couleur);
+}
+</script>
+{% endblock %}

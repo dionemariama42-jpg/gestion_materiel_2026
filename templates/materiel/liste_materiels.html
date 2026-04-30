@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block titre %}Catalogue — UFR SI{% endblock %}
+{% block page_titre %}Catalogue des matériels{% endblock %}
+
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <p class="text-muted mb-0">{{ materiels.count }} matériel(s) trouvé(s)</p>
+  {% if user.is_authenticated and user.role == 'admin' %}
+  <a href="/admin/materiel/materiel/add/" class="btn btn-primary">
+    <i class="bi bi-plus"></i> Ajouter matériel
+  </a>
+  {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Catégorie</label>
+        <select name="categorie" class="form-select">
+          <option value="">Toutes les catégories</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}"
+            {% if cat.id|stringformat:"s" == request.GET.categorie %}selected{% endif %}>
+            {{ cat.libelle }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">État</label>
+        <select name="etat" class="form-select">
+          <option value="">Tous les états</option>
+          <option value="disponible" {% if etat_filtre == 'disponible' %}selected{% endif %}>
+            Disponible
+          </option>
+          <option value="emprunte" {% if etat_filtre == 'emprunte' %}selected{% endif %}>
+            Emprunté
+          </option>
+          <option value="maintenance" {% if etat_filtre == 'maintenance' %}selected{% endif %}>
+            Maintenance
+          </option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-funnel"></i> Filtrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% for materiel in materiels %}
+  <div class="col-md-4">
+    <div class="card h-100" style="transition: transform 0.2s;"
+         onmouseover="this.style.transform='translateY(-4px)'"
+         onmouseout="this.style.transform='translateY(0)'">
+      {% if materiel.photo %}
+      <img src="{{ materiel.photo.url }}" class="card-img-top"
+           style="height:200px; object-fit:cover; border-radius:16px 16px 0 0;">
+      {% else %}
+      <div class="d-flex align-items-center justify-content-center"
+           style="height:200px; background:#f0f4f8; border-radius:16px 16px 0 0;">
+        <i class="bi bi-camera display-3" style="color:#cbd5e0;"></i>
+      </div>
+      {% endif %}
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h6 class="card-title mb-0 fw-bold">{{ materiel.nom }}</h6>
+          {% if materiel.etat == 'disponible' %}
+            <span class="badge bg-success">Disponible</span>
+          {% elif materiel.etat == 'emprunte' %}
+            <span class="badge bg-warning text-dark">Emprunté</span>
+          {% elif materiel.etat == 'maintenance' %}
+            <span class="badge bg-danger">Maintenance</span>
+          {% else %}
+            <span class="badge bg-secondary">Hors service</span>
+          {% endif %}
+        </div>
+        <p class="text-muted small mb-1">
+          <i class="bi bi-tag me-1"></i>{{ materiel.categorie }}
+        </p>
+        <p class="text-muted small mb-2">
+          <i class="bi bi-hash me-1"></i>{{ materiel.numero_serie }}
+        </p>
+        <p class="card-text small text-muted">
+          {{ materiel.description|truncatechars:80 }}
+        </p>
+      </div>
+      <div class="card-footer bg-white border-0 pt-0">
+        <a href="{% url 'detail_materiel' materiel.id %}"
+           class="btn btn-outline-primary w-100">
+          <i class="bi bi-eye me-1"></i>Voir détails
+        </a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="card p-5 text-center">
+      <i class="bi bi-inbox display-4 text-muted mb-3"></i>
+      <h5 class="text-muted">Aucun matériel trouvé</h5>
+      <p class="text-muted small">Modifiez vos filtres ou ajoutez du matériel</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

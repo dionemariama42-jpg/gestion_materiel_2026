@@ -1,0 +1,109 @@
+<mxfile host="65bd71144e">
+    <diagram id="zesjQQaB486lWcFEoeMf" name="Page-1">
+        <mxGraphModel dx="408" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="sys" value="Système de gestion du matériel UFR SI" style="rounded=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="180" y="60" width="420" height="560" as="geometry"/>
+                </mxCell>
+                <mxCell id="etu" value="Étudiant" style="shape=mxgraph.uml.actor;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="200" width="50" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="ens" value="Enseignant" style="shape=mxgraph.uml.actor;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="30" y="400" width="50" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="adm" value="Administrateur" style="shape=mxgraph.uml.actor;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="720" y="280" width="50" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc1" value="S&#39;inscrire / Se connecter" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="80" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc2" value="Consulter le catalogue matériel" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="144" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc3" value="Faire une demande d&#39;emprunt" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="208" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc4" value="Scanner le QR code" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="272" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc5" value="Restituer + rapport terrain" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="336" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc6" value="Poser une question au chatbot" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="400" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc7" value="Gérer le cahier de textes" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="464" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc8" value="Associer matériel à une séance" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="528" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc9" value="Valider / refuser une demande" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="144" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc10" value="Gérer le catalogue matériel" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="208" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc11" value="Consulter le tableau de bord" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="272" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc12" value="Voir la carte des emprunts" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="336" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc13" value="Gérer les utilisateurs" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="400" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="uc14" value="Exporter PDF / Excel" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="464" width="200" height="44" as="geometry"/>
+                </mxCell>
+                <mxCell id="2" edge="1" parent="1" source="etu" target="uc1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" edge="1" parent="1" source="etu" target="uc2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" edge="1" parent="1" source="etu" target="uc3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" edge="1" parent="1" source="etu" target="uc4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" edge="1" parent="1" source="etu" target="uc5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" edge="1" parent="1" source="etu" target="uc6">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" edge="1" parent="1" source="ens" target="uc2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" edge="1" parent="1" source="ens" target="uc7">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" edge="1" parent="1" source="ens" target="uc8">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" edge="1" parent="1" source="adm" target="uc9">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" edge="1" parent="1" source="adm" target="uc10">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" edge="1" parent="1" source="adm" target="uc11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" edge="1" parent="1" source="adm" target="uc12">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" edge="1" parent="1" source="adm" target="uc13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" edge="1" parent="1" source="adm" target="uc14">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

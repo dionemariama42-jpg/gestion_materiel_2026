@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% block titre %}Suivi GPS — Demande #{{ demande.id }}{% endblock %}
+{% block page_titre %}Suivi GPS en temps réel{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  #map { height: calc(100vh - 220px); border-radius: 16px; }
+  .transport-btn {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+  }
+  .transport-btn:hover, .transport-btn.active {
+    border-color: var(--primary);
+    background: #eef4fb;
+    color: var(--primary);
+  }
+  .transport-btn i { font-size: 22px; display: block; margin-bottom: 4px; }
+  .route-info {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .position-live {
+    background: #d4edda;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #155724;
+    display: none;
+  }
+  .pulse-dot {
+    width: 12px; height: 12px;
+    background: #27ae60;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+    margin-right: 8px;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(39,174,96,0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(39,174,96,0); }
+    100% { box-shadow: 0 0 0 0 rgba(39,174,96,0); }
+  }
+</style>
+{% endblock %}
+
+{% block contenu %}
+<div class="row g-4">
+  <div class="col-md-4">
+
+    <!-- Infos demande -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2"></i>Informations
+      </div>
+      <div class="card-body">
+        <p class="mb-2 small">
+          <strong>Étudiant :</strong>
+          {{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}
+        </p>
+        <p class="mb-2 small">
+          <strong>Période :</strong>
+          {{ demande.date_debut }} →
+          {{ demande.date_fin }}
+        </p>
+        <p class="mb-0 small">
+          <strong>Matériel :</strong>
+          {% for ligne in demande.lignes.all %}
+          <span class="badge bg-light text-dark">{{ ligne.materiel.nom }}</span>
+          {% endfor %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Suivi temps réel -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-broadcast me-2"></i>Suivi en temps réel
+      </div>
+      <div class="card-body">
+        <div class="position-live mb-3" id="live-status">
+          <span class="pulse-dot"></span>
+          Position en cours de partage...
+        </div>
+        <div class="d-grid gap-2">
+          <button class="btn btn-success" onclick="demarrerSuivi()" id="btn-demarrer">
+            <i class="bi bi-broadcast me-2"></i>Démarrer le suivi
+          </button>
+          <button class="btn btn-danger" onclick="arreterSuivi()"
+                  id="btn-arreter" style="display:none;">
+            <i class="bi bi-stop-circle me-2"></i>Arrêter le suivi
+          </button>
+        </div>
+        <p class="text-muted small mt-2 mb-0 text-center">
+          Partagez votre position GPS en temps réel
+        </p>
+      </div>
+    </div>
+
+    <!-- Transport -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-signpost-2 me-2"></i>Itinéraire
+      </div>
+      <div class="card-body">
+        <div class="row g-2 mb-3">
+          <div class="col-4">
+            <div class="transport-btn active" id="btn-pied"
+                 onclick="changerTransport('foot-walking', this)">
+              <i class="bi bi-person-walking"></i>
+              <small style="font-size:11px;">À pied</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="transport-btn" id="btn-moto"
+                 onclick="changerTransport('driving-car', this)">
+              <i class="bi bi-bicycle"></i>
+              <small style="font-size:11px;">Moto/Vélo</small>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="transport-btn" id="btn-voiture"
+                 onclick="changerTransport('driving-car', this)">
+              <i class="bi bi-car-front"></i>
+              <small style="font-size:11px;">Voiture</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="route-info mb-3" id="route-info" style="display:none;">
+          <div class="row text-center">
+            <div class="col-6 border-end border-white border-opacity-25">
+              <h4 class="mb-0 fw-bold" id="distance-val">—</h4>
+              <small class="opacity-75">Distance</small>
+            </div>
+            <div class="col-6">
+              <h4 class="mb-0 fw-bold" id="duree-val">—</h4>
+              <small class="opacity-75">Durée</small>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-100" onclick="calculerTousLesModes()">
+          <i class="bi bi-calculator me-2"></i>Comparer les durées
+        </button>
+      </div>
+    </div>
+
+    <!-- Comparaison -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clock me-2"></i>Comparaison
+      </div>
+      <div class="card-body" id="comparaison">
+        <p class="text-muted small text-center mb-0">
+          Localisez-vous d'abord puis cliquez sur "Comparer"
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-md-8">
+    <div id="map"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  var API_KEY = '{{ api_key }}';
+  var destinationLat = {{ demande.emplacement.latitude|default:14.6928|stringformat:"f" }};
+  var destinationLng = {{ demande.emplacement.longitude|default:-17.4467|stringformat:"f" }};
+  var destinationNom = '{{ demande.emplacement.libelle|default:"Destination" }}';
+  var maPosition = null;
+  var modeActuel = 'foot-walking';
+  var routeLayer = null;
+  var marqueurPosition = null;
+  var marqueurDestination = null;
+  var historiqueLayer = null;
+  var intervalSuivi = null;
+  var watchId = null;
+
+  // Initialiser carte
+  var map = L.map('map').setView([destinationLat, destinationLng], 14);
+  L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  // Icônes
+  var iconeDestination = L.divIcon({
+    html: '<div style="width:18px;height:18px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '', iconSize: [18,18], iconAnchor: [9,9]
+  });
+  var iconePosition = L.divIcon({
+    html: '<div style="width:16px;height:16px;background:#27ae60;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '', iconSize: [16,16], iconAnchor: [8,8]
+  });
+
+  // Marqueur destination
+  marqueurDestination = L.marker(
+    [destinationLat, destinationLng],
+    {icon: iconeDestination}
+  ).addTo(map);
+  marqueurDestination.bindPopup(
+    '<strong>' + destinationNom + '</strong><br><small>Destination</small>'
+  ).openPopup();
+
+  // Démarrer suivi temps réel
+  function demarrerSuivi() {
+    if (!navigator.geolocation) {
+      alert('Géolocalisation non supportée.');
+      return;
+    }
+
+    document.getElementById('btn-demarrer').style.display = 'none';
+    document.getElementById('btn-arreter').style.display = 'block';
+    document.getElementById('live-status').style.display = 'block';
+
+    // Suivi continu
+    watchId = navigator.geolocation.watchPosition(function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      maPosition = [lat, lng];
+
+      // Mettre à jour marqueur position
+      if (marqueurPosition) map.removeLayer(marqueurPosition);
+      marqueurPosition = L.marker([lat, lng], {icon: iconePosition}).addTo(map);
+      marqueurPosition.bindPopup('<strong>Ma position</strong>').openPopup();
+
+      // Envoyer position au serveur
+      fetch('/emprunts/{{ demande.id }}/position/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json',
+                  'X-CSRFToken': getCookie('csrftoken')},
+        body: JSON.stringify({latitude: lat, longitude: lng})
+      });
+
+      // Mettre à jour itinéraire
+      calculerItineraire(modeActuel);
+
+    }, function(err) {
+      console.error(err);
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 10000
+    });
+
+    // Charger historique positions toutes les 5 secondes
+    intervalSuivi = setInterval(chargerHistorique, 5000);
+  }
+
+  function arreterSuivi() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    if (intervalSuivi) clearInterval(intervalSuivi);
+    document.getElementById('btn-demarrer').style.display = 'block';
+    document.getElementById('btn-arreter').style.display = 'none';
+    document.getElementById('live-status').style.display = 'none';
+  }
+
+  // Charger historique des positions
+  function chargerHistorique() {
+    fetch('/emprunts/{{ demande.id }}/positions/')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (historiqueLayer) map.removeLayer(historiqueLayer);
+        if (data.positions.length > 1) {
+          var coords = data.positions.map(function(p) {
+            return [p.lat, p.lng];
+          });
+          historiqueLayer = L.polyline(coords, {
+            color: '#27ae60',
+            weight: 4,
+            opacity: 0.7,
+            dashArray: '8, 4'
+          }).addTo(map);
+        }
+      });
+  }
+
+  // Calculer itinéraire
+  function calculerItineraire(mode) {
+    if (!maPosition) return;
+    if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+
+    var url = 'https://api.openrouteservice.org/v2/directions/' + mode +
+      '?api_key=' + API_KEY +
+      '&start=' + maPosition[1] + ',' + maPosition[0] +
+      '&end=' + destinationLng + ',' + destinationLat;
+
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.features && data.features.length > 0) {
+          var feature = data.features[0];
+          var coords = feature.geometry.coordinates.map(function(c) {
+            return [c[1], c[0]];
+          });
+          var couleur = mode === 'foot-walking' ? '#27ae60' : '#1a5276';
+          routeLayer = L.polyline(coords, {
+            color: couleur, weight: 5, opacity: 0.8
+          }).addTo(map);
+          map.fitBounds(routeLayer.getBounds(), {padding: [40, 40]});
+
+          var summary = feature.properties.summary;
+          var distance = (summary.distance / 1000).toFixed(1) + ' km';
+          var dureeMin = Math.round(summary.duration / 60);
+          var duree = dureeMin > 60 ?
+            Math.floor(dureeMin/60) + 'h ' + (dureeMin%60) + 'min' :
+            dureeMin + ' min';
+
+          document.getElementById('route-info').style.display = 'block';
+          document.getElementById('distance-val').textContent = distance;
+          document.getElementById('duree-val').textContent = duree;
+        }
+      });
+  }
+
+  function changerTransport(mode, btn) {
+    modeActuel = mode;
+    document.querySelectorAll('.transport-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    if (maPosition) calculerItineraire(mode);
+  }
+
+  function calculerTousLesModes() {
+    if (!maPosition) {
+      alert('Démarrez d\'abord le suivi pour obtenir votre position.');
+      return;
+    }
+    var modes = [
+      {id: 'foot-walking', nom: 'À pied', icon: 'bi-person-walking', couleur: '#27ae60'},
+      {id: 'driving-car', nom: 'Moto/Voiture', icon: 'bi-car-front', couleur: '#1a5276'},
+    ];
+    var comparaison = document.getElementById('comparaison');
+    comparaison.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+
+    var resultats = [];
+    var promesses = modes.map(function(mode) {
+      var url = 'https://api.openrouteservice.org/v2/directions/' + mode.id +
+        '?api_key=' + API_KEY +
+        '&start=' + maPosition[1] + ',' + maPosition[0] +
+        '&end=' + destinationLng + ',' + destinationLat;
+      return fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.features && data.features.length > 0) {
+            var summary = data.features[0].properties.summary;
+            var distance = (summary.distance / 1000).toFixed(1) + ' km';
+            var dureeMin = Math.round(summary.duration / 60);
+            var duree = dureeMin > 60 ?
+              Math.floor(dureeMin/60) + 'h ' + (dureeMin%60) + 'min' :
+              dureeMin + ' min';
+            resultats.push({
+              nom: mode.nom, icon: mode.icon,
+              couleur: mode.couleur, distance: distance, duree: duree
+            });
+          }
+        });
+    });
+
+    Promise.all(promesses).then(function() {
+      var html = '';
+      resultats.forEach(function(r) {
+        html += '<div class="d-flex justify-content-between align-items-center p-2 mb-2" ' +
+          'style="background:#f8fafc; border-radius:10px;">' +
+          '<div class="d-flex align-items-center gap-2">' +
+          '<i class="bi ' + r.icon + '" style="color:' + r.couleur + '; font-size:20px;"></i>' +
+          '<strong style="font-size:13px;">' + r.nom + '</strong>' +
+          '</div>' +
+          '<div class="text-end">' +
+          '<strong style="color:var(--primary); font-size:13px;">' + r.duree + '</strong>' +
+          '<p class="mb-0 text-muted" style="font-size:11px;">' + r.distance + '</p>' +
+          '</div></div>';
+      });
+      comparaison.innerHTML = html;
+    });
+  }
+
+  // Cookie CSRF
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Charger historique au démarrage
+  chargerHistorique();
+  setInterval(chargerHistorique, 10000);
+</script>
+{% endblock %}

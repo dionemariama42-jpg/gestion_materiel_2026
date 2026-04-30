@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% block titre %}Nouvelle demande — UFR SI{% endblock %}
+{% block page_titre %}Nouvelle demande d'emprunt{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  #map { height: 350px; border-radius: 12px; }
+  .search-box {
+    position: relative;
+  }
+  .search-results {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .search-result-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f4f8;
+    transition: background 0.2s;
+  }
+  .search-result-item:hover { background: #f0f4f8; }
+  .search-result-item:last-child { border-bottom: none; }
+  .coord-badge {
+    background: #f0f4f8;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #64748b;
+  }
+</style>
+{% endblock %}
+
+{% block contenu %}
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clipboard-plus me-2"></i>Informations de la demande
+      </div>
+      <div class="card-body">
+        <form method="post" id="form-demande">
+          {% csrf_token %}
+          <div class="row mb-3">
+  <div class="col-md-6">
+    <label class="form-label">Date et heure de début</label>
+    <input type="datetime-local" name="date_debut" class="form-control" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Date et heure de fin</label>
+    <input type="datetime-local" name="date_fin" class="form-control" required>
+  </div>
+</div>
+
+          <div class="mb-4">
+            <label class="form-label">Motif de la demande</label>
+            <textarea name="motif" class="form-control" rows="3"
+              placeholder="Expliquez pourquoi vous avez besoin de ce matériel..."></textarea>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Matériels souhaités</label>
+            <div class="row g-2">
+              {% for materiel in materiels %}
+              <div class="col-md-6">
+                <div class="card p-3" style="cursor:pointer; border: 2px solid #e2e8f0;
+                     transition: all 0.3s;"
+                     onclick="toggleMateriel(this, '{{ materiel.id }}')">
+                  <div class="d-flex align-items-center gap-3">
+                    <input type="checkbox" name="materiels" value="{{ materiel.id }}"
+                           id="mat{{ materiel.id }}" style="display:none;">
+                    <div style="width:40px; height:40px; border-radius:10px;
+                         background:#f0f4f8; display:flex; align-items:center;
+                         justify-content:center; flex-shrink:0;">
+                      <i class="bi bi-box-seam" style="color:var(--primary);"></i>
+                    </div>
+                    <div>
+                      <strong style="font-size:13px;">{{ materiel.nom }}</strong>
+                      <p class="mb-0 text-muted" style="font-size:12px;">
+                        {{ materiel.numero_serie }}
+                      </p>
+                    </div>
+                    <span class="badge bg-success ms-auto">Disponible</span>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <hr>
+          <h6 class="mb-3">
+            <i class="bi bi-geo-alt me-2"></i>Localisation terrain
+          </h6>
+
+          <!-- Recherche lieu -->
+          <div class="mb-3 search-box">
+            <label class="form-label">Rechercher un lieu</label>
+            <div class="input-group">
+              <span class="input-group-text" style="border-radius:10px 0 0 10px;">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="text" id="recherche-lieu" class="form-control"
+                     placeholder="Ex: Université de Thiès, Plateau de Thiès..."
+                     style="border-radius:0 10px 10px 0;"
+                     oninput="rechercherLieu(this.value)">
+            </div>
+            <div class="search-results" id="search-results"></div>
+          </div>
+
+          <!-- Nom du lieu -->
+          <div class="mb-3">
+            <label class="form-label">Nom du lieu</label>
+            <input type="text" name="libelle" id="libelle" class="form-control"
+              placeholder="Ex: Campus UFR SI" required>
+          </div>
+
+          <!-- Coordonnées -->
+          <div class="row mb-3">
+            <div class="col-md-5">
+              <label class="form-label">Latitude</label>
+              <input type="text" name="latitude" id="latitude"
+                class="form-control" placeholder="Ex: 14.6928"
+                oninput="mettreAJourDepuisCoords()">
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Longitude</label>
+              <input type="text" name="longitude" id="longitude"
+                class="form-control" placeholder="Ex: -17.4467"
+                oninput="mettreAJourDepuisCoords()">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="button" class="btn btn-outline-primary w-100"
+                      onclick="maPosition()">
+                <i class="bi bi-crosshair"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Carte -->
+          <div id="map" class="mb-4"></div>
+
+          <!-- Coordonnées affichées -->
+          <div id="coords-affichees" class="coord-badge mb-4" style="display:none;">
+            <i class="bi bi-geo-alt-fill text-success me-2"></i>
+            <span id="coords-texte"></span>
+          </div>
+
+          <input type="hidden" name="latitude" id="latitude-hidden">
+          <input type="hidden" name="longitude" id="longitude-hidden">
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-send me-2"></i>Envoyer la demande
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2"></i>Instructions
+      </div>
+      <div class="card-body">
+        <div class="d-flex gap-3 mb-3">
+          <div style="width:32px; height:32px; border-radius:50%;
+               background:var(--primary); color:white;
+               display:flex; align-items:center; justify-content:center;
+               font-weight:700; flex-shrink:0; font-size:13px;">1</div>
+          <div>
+            <strong style="font-size:14px;">Choisissez les dates</strong>
+            <p class="text-muted small mb-0">Sélectionnez la période</p>
+          </div>
+        </div>
+        <div class="d-flex gap-3 mb-3">
+          <div style="width:32px; height:32px; border-radius:50%;
+               background:var(--primary); color:white;
+               display:flex; align-items:center; justify-content:center;
+               font-weight:700; flex-shrink:0; font-size:13px;">2</div>
+          <div>
+            <strong style="font-size:14px;">Sélectionnez le matériel</strong>
+            <p class="text-muted small mb-0">Cliquez sur les cartes</p>
+          </div>
+        </div>
+        <div class="d-flex gap-3 mb-3">
+          <div style="width:32px; height:32px; border-radius:50%;
+               background:var(--primary); color:white;
+               display:flex; align-items:center; justify-content:center;
+               font-weight:700; flex-shrink:0; font-size:13px;">3</div>
+          <div>
+            <strong style="font-size:14px;">Recherchez votre lieu</strong>
+            <p class="text-muted small mb-0">
+              Tapez le nom ou entrez les coordonnées GPS
+            </p>
+          </div>
+        </div>
+        <div class="d-flex gap-3">
+          <div style="width:32px; height:32px; border-radius:50%;
+               background:var(--primary); color:white;
+               display:flex; align-items:center; justify-content:center;
+               font-weight:700; flex-shrink:0; font-size:13px;">4</div>
+          <div>
+            <strong style="font-size:14px;">Envoyez la demande</strong>
+            <p class="text-muted small mb-0">L'admin validera votre demande</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-shield-check me-2"></i>Règles d'emprunt
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled small text-muted mb-0">
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            Restituer à la date prévue
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            Signaler tout incident immédiatement
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            Prendre soin du matériel
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-x-circle text-danger me-2"></i>
+            Retard = pénalité appliquée
+          </li>
+          <li>
+            <i class="bi bi-x-circle text-danger me-2"></i>
+            3 pénalités = compte bloqué
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Initialiser la carte centrée sur Thiès, Sénégal
+  var map = L.map('map').setView([14.6928, -17.4467], 13);
+  L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  var marker = null;
+
+  // Icône personnalisée
+  var monIcone = L.divIcon({
+    html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+
+  // Placer marqueur sur la carte
+  function placerMarqueur(lat, lng, nom) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng], {icon: monIcone}).addTo(map);
+    if (nom) marker.bindPopup('<strong>' + nom + '</strong>').openPopup();
+    map.setView([lat, lng], 15);
+
+    // Mettre à jour les champs
+    document.getElementById('latitude').value = lat.toFixed(6);
+    document.getElementById('longitude').value = lng.toFixed(6);
+    document.getElementById('latitude-hidden').value = lat.toFixed(6);
+    document.getElementById('longitude-hidden').value = lng.toFixed(6);
+
+    // Afficher coordonnées
+    document.getElementById('coords-affichees').style.display = 'block';
+    document.getElementById('coords-texte').textContent =
+      'Lat: ' + lat.toFixed(6) + ' | Lng: ' + lng.toFixed(6);
+  }
+
+  // Clic sur la carte
+  map.on('click', function(e) {
+    placerMarqueur(e.latlng.lat, e.latlng.lng, null);
+
+    // Géocodage inverse pour trouver le nom du lieu
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' +
+      e.latlng.lat + '&lon=' + e.latlng.lng + '&accept-language=fr')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.display_name) {
+          var nom = data.display_name.split(',').slice(0, 2).join(',');
+          document.getElementById('libelle').value = nom;
+          marker.bindPopup('<strong>' + nom + '</strong>').openPopup();
+        }
+      });
+  });
+
+  // Rechercher un lieu par nom
+  var timeoutRecherche = null;
+  function rechercherLieu(query) {
+    clearTimeout(timeoutRecherche);
+    var results = document.getElementById('search-results');
+
+    if (query.length < 3) {
+      results.style.display = 'none';
+      return;
+    }
+
+    timeoutRecherche = setTimeout(function() {
+      fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+        encodeURIComponent(query) + '&limit=5&accept-language=fr')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          results.innerHTML = '';
+          if (data.length === 0) {
+            results.innerHTML = '<div class="search-result-item text-muted">Aucun résultat</div>';
+            results.style.display = 'block';
+            return;
+          }
+          data.forEach(function(item) {
+            var div = document.createElement('div');
+            div.className = 'search-result-item';
+            div.innerHTML = '<i class="bi bi-geo-alt me-2 text-muted"></i>' +
+              item.display_name.split(',').slice(0, 3).join(',');
+            div.onclick = function() {
+              var lat = parseFloat(item.lat);
+              var lng = parseFloat(item.lon);
+              var nom = item.display_name.split(',').slice(0, 2).join(',');
+              placerMarqueur(lat, lng, nom);
+              document.getElementById('libelle').value = nom;
+              document.getElementById('recherche-lieu').value = nom;
+              results.style.display = 'none';
+            };
+            results.appendChild(div);
+          });
+          results.style.display = 'block';
+        });
+    }, 500);
+  }
+
+  // Mettre à jour depuis les champs coordonnées
+  function mettreAJourDepuisCoords() {
+    var lat = parseFloat(document.getElementById('latitude').value);
+    var lng = parseFloat(document.getElementById('longitude').value);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      placerMarqueur(lat, lng, 'Position saisie');
+    }
+  }
+
+  // Ma position GPS
+  function maPosition() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        placerMarqueur(pos.coords.latitude, pos.coords.longitude, 'Ma position');
+      });
+    }
+  }
+
+  // Sélection matériel
+  function toggleMateriel(card, id) {
+  var checkbox = document.getElementById('mat' + id);
+  checkbox.checked = !checkbox.checked;
+  if (checkbox.checked) {
+    card.style.borderColor = 'var(--primary)';
+    card.style.background = '#eef4fb';
+    document.getElementById('qte' + id).style.display = 'flex';
+  } else {
+    card.style.borderColor = '#e2e8f0';
+    card.style.background = 'white';
+    document.getElementById('qte' + id).style.display = 'none';
+  }
+}
+
+  // Fermer résultats si on clique ailleurs
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-box')) {
+      document.getElementById('search-results').style.display = 'none';
+    }
+  });
+</script>
+{% endblock %}

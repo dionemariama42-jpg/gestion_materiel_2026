@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suivi matériel — UFR SI</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 360px;
+    }
+    .logo {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #1a5276, #2980b9);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px;
+      color: white;
+    }
+    h2 { color: #1a5276; margin-bottom: 8px; }
+    p { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+    .materiel-info {
+      background: #f0f4f8;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .materiel-info p {
+      margin-bottom: 6px;
+      color: #2d3748;
+      font-size: 13px;
+    }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-start {
+      background: linear-gradient(135deg, #27ae60, #1e8449);
+      color: white;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(39,174,96,0.3);
+    }
+    .btn-stop {
+      background: linear-gradient(135deg, #e74c3c, #922b21);
+      color: white;
+      display: none;
+    }
+    .status {
+      background: #d4edda;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      color: #155724;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+    }
+    .pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(39,174,96,0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(39,174,96,0); }
+      100% { box-shadow: 0 0 0 0 rgba(39,174,96,0); }
+    }
+    .coords {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">📍</div>
+    <h2>Suivi matériel</h2>
+    <p>UFR Sciences de l'Ingénieur</p>
+
+    <div class="materiel-info">
+      <p><strong>Étudiant :</strong>
+        {{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}
+      </p>
+      <p><strong>Matériel :</strong>
+        {% for ligne in demande.lignes.all %}{{ ligne.materiel.nom }}{% endfor %}
+      </p>
+      <p><strong>Lieu prévu :</strong>
+        {% if demande.emplacement %}{{ demande.emplacement.libelle }}{% endif %}
+      </p>
+      <p><strong>Fin :</strong> {{ demande.date_fin|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="status" id="status">
+      🟢 Position en cours de partage...
+    </div>
+
+    <button class="btn btn-start pulse" id="btn-start" onclick="demarrer()">
+      📡 Démarrer le suivi
+    </button>
+    <button class="btn btn-stop" id="btn-stop" onclick="arreter()">
+      ⏹ Arrêter le suivi
+    </button>
+
+    <div class="coords" id="coords"></div>
+  </div>
+
+  <script>
+    var watchId = null;
+    var intervalId = null;
+    var demandeId = {{ demande.id }};
+
+    function demarrer() {
+      if (!navigator.geolocation) {
+        alert('GPS non disponible sur cet appareil.');
+        return;
+      }
+
+      document.getElementById('btn-start').style.display = 'none';
+      document.getElementById('btn-stop').style.display = 'block';
+      document.getElementById('status').style.display = 'block';
+
+      watchId = navigator.geolocation.watchPosition(function(pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+
+        document.getElementById('coords').textContent =
+          'Lat: ' + lat.toFixed(6) + ' | Lng: ' + lng.toFixed(6);
+
+        // Envoyer position au serveur
+        fetch('/emprunts/' + demandeId + '/position/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({latitude: lat, longitude: lng})
+        });
+
+      }, function(err) {
+        alert('Erreur GPS: ' + err.message);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000
+      });
+    }
+
+    function arreter() {
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (intervalId) clearInterval(intervalId);
+      document.getElementById('btn-start').style.display = 'block';
+      document.getElementById('btn-stop').style.display = 'none';
+      document.getElementById('status').style.display = 'none';
+      document.getElementById('coords').textContent = '';
+    }
+
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  </script>
+</body>
+</html>

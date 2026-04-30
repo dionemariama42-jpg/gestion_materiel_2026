@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block titre %}Inscription — UFR SI{% endblock %}
+
+{% block contenu %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-6">
+    <div class="card p-4">
+      <h3 class="text-center mb-4" style="color:#1a5276;">
+        <i class="bi bi-person-plus"></i> Créer un compte
+      </h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Prénom</label>
+            <input type="text" name="first_name" class="form-control" required>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Nom</label>
+            <input type="text" name="last_name" class="form-control" required>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Nom d'utilisateur</label>
+          <input type="text" name="username" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Email universitaire</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Téléphone</label>
+          <input type="text" name="telephone" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-person-check"></i> Créer mon compte
+        </button>
+      </form>
+      <hr>
+      <p class="text-center">
+        Déjà un compte ?
+        <a href="{% url 'connexion' %}">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block titre %}Demande #{{ demande.id }} — UFR SI{% endblock %}
+{% block page_titre %}Demande #{{ demande.id }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
+{% block contenu %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    {% if demande.statut == 'en_attente' %}
+      <span class="badge bg-warning text-dark fs-6">En attente</span>
+    {% elif demande.statut == 'approuvee' %}
+      <span class="badge bg-info fs-6">Approuvée</span>
+    {% elif demande.statut == 'en_cours' %}
+      <span class="badge bg-success fs-6">En cours</span>
+    {% elif demande.statut == 'restituee' %}
+      <span class="badge bg-secondary fs-6">Restituée</span>
+    {% elif demande.statut == 'refusee' %}
+      <span class="badge bg-danger fs-6">Refusée</span>
+    {% endif %}
+  </div>
+  <a href="{% url 'liste_demandes' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Retour
+  </a>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+
+    <!-- Informations -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2"></i>Informations de la demande
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p class="text-muted small mb-1">Étudiant</p>
+            <p class="fw-bold mb-0">
+              {{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <p class="text-muted small mb-1">Date de demande</p>
+            <p class="fw-bold mb-0">{{ demande.date_demande|date:"d/m/Y H:i" }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="text-muted small mb-1">Date début</p>
+            <p class="fw-bold mb-0">{{ demande.date_debut|date:"d/m/Y" }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="text-muted small mb-1">Date fin</p>
+            <p class="fw-bold mb-0">{{ demande.date_fin|date:"d/m/Y" }}</p>
+          </div>
+          <div class="col-12">
+            <p class="text-muted small mb-1">Motif</p>
+            <p class="fw-bold mb-0">{{ demande.motif|default:"Aucun motif précisé" }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matériels -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-box-seam me-2"></i>Matériels demandés
+      </div>
+      <div class="card-body p-0">
+        {% for ligne in demande.lignes.all %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+          <div class="d-flex align-items-center gap-3">
+            <div style="width:42px; height:42px; border-radius:10px;
+                 background:#f0f4f8; display:flex; align-items:center;
+                 justify-content:center;">
+              <i class="bi bi-tools" style="color:var(--primary);"></i>
+            </div>
+            <div>
+              <strong>{{ ligne.materiel.nom }}</strong>
+              <p class="text-muted small mb-0">{{ ligne.materiel.numero_serie }}</p>
+            </div>
+          </div>
+          <span class="badge bg-light text-dark">x{{ ligne.quantite }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Carte localisation -->
+    {% if demande.emplacement %}
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-geo-alt me-2"></i>Localisation terrain
+      </div>
+      <div class="card-body">
+        <p class="mb-1">
+          <strong>Lieu :</strong> {{ demande.emplacement.libelle }}
+        </p>
+        <p class="text-muted small mb-3">
+          Coordonnées : {{ demande.emplacement.latitude }},
+          {{ demande.emplacement.longitude }}
+        </p>
+        <div id="map" style="height:300px; border-radius:12px;"></div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <div class="col-md-4">
+
+    <!-- Actions -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-lightning me-2"></i>Actions
+      </div>
+      <div class="card-body d-grid gap-2">
+        {% if demande.emplacement %}
+        <a href="{% url 'suivi_gps' demande.id %}" class="btn btn-primary">
+          <i class="bi bi-geo-alt me-2"></i>Suivi GPS et itinéraire
+        </a>
+        {% endif %}
+        {% if demande.statut == 'en_cours' %}
+        <a href="{% url 'restituer' demande.id %}" class="btn btn-success">
+          <i class="bi bi-arrow-return-left me-2"></i>Restituer le matériel
+        </a>
+        {% endif %}
+        <a href="{% url 'liste_demandes' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+        </a>
+      </div>
+    </div>
+
+    <!-- Restitution -->
+    {% if demande.restitution %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-check-circle me-2"></i>Restitution
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-1">Date de retour</p>
+        <p class="fw-bold mb-2">
+          {{ demande.restitution.date_retour|date:"d/m/Y H:i" }}
+        </p>
+        <p class="text-muted small mb-1">État du matériel</p>
+        <p class="fw-bold mb-2">
+          {% if demande.restitution.etat_materiel == 'bon' %}
+            <span class="badge bg-success">Bon état</span>
+          {% elif demande.restitution.etat_materiel == 'abime' %}
+            <span class="badge bg-warning text-dark">Abîmé</span>
+          {% elif demande.restitution.etat_materiel == 'perdu' %}
+            <span class="badge bg-danger">Perdu</span>
+          {% endif %}
+        </p>
+        {% if demande.restitution.observations %}
+        <p class="text-muted small mb-1">Observations</p>
+        <p class="mb-0">{{ demande.restitution.observations }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Infos supplémentaires -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-clock-history me-2"></i>Durée emprunt
+      </div>
+      <div class="card-body text-center">
+        <h2 style="color:var(--primary);">{{ demande.duree_emprunt }}</h2>
+        <p class="text-muted mb-0">jour(s)</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if demande.emplacement %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  var lat = {{ demande.emplacement.latitude }};
+  var lng = {{ demande.emplacement.longitude }};
+  var lieu = "{{ demande.emplacement.libelle }}";
+  var map = L.map('map').setView([lat, lng], 14);
+  L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  var icon = L.divIcon({
+    html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8]
+  });
+  L.marker([lat, lng], {icon: icon}).addTo(map)
+    .bindPopup('<strong>' + lieu + '</strong>').openPopup();
+</script>
+{% endif %}
+{% endblock %}

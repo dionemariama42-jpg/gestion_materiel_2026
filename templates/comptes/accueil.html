@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block titre %}Accueil — UFR SI{% endblock %}
+{% block page_titre %}Accueil{% endblock %}
+
+{% block contenu %}
+<!-- Hero Section -->
+<div class="hero">
+  <!-- Slides -->
+  <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1600&q=80');"></div>
+  <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1503551723145-6c040742065b?w=1600&q=80');"></div>
+  <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1600&q=80');"></div>
+  <div class="hero-slide" style="background-image: url('https://images.unsplash.com/photo-1601972599748-a1b8f09938f3?w=1600&q=80');"></div>
+
+  <!-- Overlay -->
+  <div class="hero-overlay"></div>
+
+  <!-- Contenu hero -->
+  <div class="hero-content">
+    <span class="hero-badge">
+      <i class="bi bi-geo-alt-fill me-2"></i>
+      UFR Sciences de l'Ingénieur — Université de Thiès
+    </span>
+    <h1 class="hero-title">
+      Gestion Intelligente<br>du Matériel
+    </h1>
+    <p class="hero-subtitle">
+      Plateforme numérique de gestion du matériel topographique et géodésique.
+      Empruntez, suivez et gérez votre équipement en toute simplicité.
+    </p>
+    <div class="hero-btns">
+      {% if user.is_authenticated %}
+      <a href="{% url 'tableau_de_bord' %}" class="hero-btn-primary">
+        <i class="bi bi-speedometer2 me-2"></i>Mon tableau de bord
+      </a>
+      <a href="{% url 'liste_materiels' %}" class="hero-btn-secondary">
+        <i class="bi bi-box-seam me-2"></i>Voir le catalogue
+      </a>
+      {% else %}
+      <a href="{% url 'connexion' %}" class="hero-btn-primary">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Se connecter
+      </a>
+      <a href="{% url 'inscription' %}" class="hero-btn-secondary">
+        <i class="bi bi-person-plus me-2"></i>S'inscrire
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Dots -->
+  <div class="hero-dots">
+    <div class="hero-dot active" onclick="showSlide(0)"></div>
+    <div class="hero-dot" onclick="showSlide(1)"></div>
+    <div class="hero-dot" onclick="showSlide(2)"></div>
+    <div class="hero-dot" onclick="showSlide(3)"></div>
+  </div>
+
+  <!-- Bande défilante -->
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span class="ticker-item">
+        <i class="bi bi-geo-alt-fill"></i>UFR Sciences de l'Ingénieur
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-compass"></i>Club Topographie
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-map"></i>Club Géomatique
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-building"></i>Club Génie Civil
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-shield-check"></i>Club QHSE
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-translate"></i>Club Anglais
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-layers"></i>Club Géotechnique
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-geo-alt-fill"></i>UFR Sciences de l'Ingénieur
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-compass"></i>Club Topographie
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-map"></i>Club Géomatique
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-building"></i>Club Génie Civil
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-shield-check"></i>Club QHSE
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-translate"></i>Club Anglais
+      </span>
+      <span class="ticker-separator">✦</span>
+      <span class="ticker-item">
+        <i class="bi bi-layers"></i>Club Géotechnique
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Section -->
+<div class="stats-section mt-0">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-md-3">
+        <div class="stats-number compteur" data-cible="150">0</div>
+        <div class="stats-label">Matériels disponibles</div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-number compteur" data-cible="6">0</div>
+        <div class="stats-label">Clubs actifs</div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-number compteur" data-cible="500">0</div>
+        <div class="stats-label">Étudiants inscrits</div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-number compteur" data-cible="1200">0</div>
+        <div class="stats-label">Emprunts réalisés</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold" style="color:var(--primary);">
+        Tout ce dont vous avez besoin
+      </h2>
+      <p class="text-muted">Une plateforme complète pour gérer votre matériel</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4 fade-in fade-in-delay-1">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#eef4fb;">
+            <i class="bi bi-box-seam" style="color:var(--primary);"></i>
+          </div>
+          <h5 class="fw-bold mb-3">Gestion du matériel</h5>
+          <p class="text-muted">
+            Consultez le catalogue, faites vos demandes d'emprunt
+            et suivez l'état de votre matériel en temps réel.
+          </p>
+          <a href="{% url 'liste_materiels' %}"
+             class="btn btn-outline-primary mt-3">
+            Voir le catalogue
+          </a>
+        </div>
+      </div>
+      <div class="col-md-4 fade-in fade-in-delay-2">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#eafaf1;">
+            <i class="bi bi-geo-alt" style="color:#27ae60;"></i>
+          </div>
+          <h5 class="fw-bold mb-3">Suivi géolocalisation</h5>
+          <p class="text-muted">
+            Localisez le matériel sur le terrain avec une carte
+            interactive et suivez les itinéraires en temps réel.
+          </p>
+          <a href="{% url 'liste_demandes' %}"
+             class="btn btn-outline-primary mt-3">
+            Mes emprunts
+          </a>
+        </div>
+      </div>
+      <div class="col-md-4 fade-in fade-in-delay-3">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:#fef9e7;">
+            <i class="bi bi-people" style="color:#f39c12;"></i>
+          </div>
+          <h5 class="fw-bold mb-3">Clubs & Activités</h5>
+          <p class="text-muted">
+            Rejoignez un club, participez aux activités et
+            consultez le cahier de textes numérique.
+          </p>
+          <a href="{% url 'liste_clubs' %}"
+             class="btn btn-outline-primary mt-3">
+            Voir les clubs
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

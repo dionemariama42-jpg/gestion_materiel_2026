@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block titre %}Notifications — UFR SI{% endblock %}
+{% block page_titre %}Mes notifications{% endblock %}
+
+{% block contenu %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    {% if notifications %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <p class="text-muted mb-0">{{ notifications.count }} notification(s)</p>
+    </div>
+    {% for notif in notifications %}
+    <div class="card mb-3" style="border-left: 4px solid
+         {% if not notif.lu %}var(--primary){% else %}#e2e8f0{% endif %};">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div class="d-flex gap-3 align-items-start">
+          <div style="width:42px; height:42px; border-radius:50%; flex-shrink:0;
+               background:{% if not notif.lu %}var(--primary){% else %}#f0f4f8{% endif %};
+               color:{% if not notif.lu %}white{% else %}#94a3b8{% endif %};
+               display:flex; align-items:center; justify-content:center;">
+            <i class="bi bi-bell"></i>
+          </div>
+          <div>
+            {% if not notif.lu %}
+            <span class="badge bg-primary mb-1">Nouveau</span>
+            {% endif %}
+            <p class="mb-1" style="font-size:14px;">{{ notif.message }}</p>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-clock me-1"></i>{{ notif.date|date:"d/m/Y H:i" }}
+            </p>
+          </div>
+        </div>
+        {% if notif.lien %}
+        <a href="{{ notif.lien }}" class="btn btn-sm btn-outline-primary flex-shrink-0">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card p-5 text-center">
+      <i class="bi bi-bell-slash display-4 text-muted mb-3"></i>
+      <h5 class="text-muted">Aucune notification</h5>
+      <p class="text-muted small">Vous êtes à jour !</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

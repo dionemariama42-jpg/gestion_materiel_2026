@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block titre %}Carte admin — UFR SI{% endblock %}
+{% block page_titre %}Carte globale — Matériels en cours{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  #map { height: calc(100vh - 180px); border-radius: 16px; }
+  .materiel-popup { min-width: 200px; }
+  .alerte-badge {
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    position: absolute;
+    top: -5px; right: -5px;
+  }
+</style>
+{% endblock %}
+
+{% block contenu %}
+<div class="row g-4">
+  <div class="col-md-3">
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-broadcast me-2"></i>Matériels actifs
+      </div>
+      <div class="card-body p-0">
+        {% for demande in demandes %}
+        <div class="d-flex align-items-center gap-3 p-3 border-bottom"
+             style="cursor:pointer;"
+             onclick="centrerSur({{ demande.id }})">
+          <div style="width:10px; height:10px; border-radius:50%;
+               background:#27ae60; flex-shrink:0;
+               box-shadow: 0 0 0 3px rgba(39,174,96,0.3);"></div>
+          <div>
+            <strong style="font-size:13px;">
+              {{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}
+            </strong>
+            <p class="text-muted small mb-0">
+              {% for ligne in demande.lignes.all %}
+              {{ ligne.materiel.nom }}
+              {% endfor %}
+            </p>
+            <p class="text-muted small mb-0">
+              Fin : {{ demande.date_fin|date:"d/m/Y" }}
+            </p>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-inbox d-block mb-2"></i>
+          Aucun emprunt en cours
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-info-circle me-2"></i>Légende
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div style="width:12px; height:12px; border-radius:50%;
+               background:#1a5276;"></div>
+          <small>Destination prévue</small>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div style="width:12px; height:12px; border-radius:50%;
+               background:#27ae60;"></div>
+          <small>Position actuelle</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div style="width:12px; height:12px; border-radius:50%;
+               background:#e74c3c;"></div>
+          <small>Hors zone autorisée</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+    <div id="map"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  var map = L.map('map').setView([14.6928, -17.4467], 12);
+  L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  var marqueurs = {};
+  var cercles = {};
+
+  var demandes = [
+    {% for demande in demandes %}
+    {% if demande.emplacement %}
+    {
+      id: {{ demande.id }},
+      lat: {{ demande.emplacement.latitude|stringformat:"f" }},
+      lng: {{ demande.emplacement.longitude|stringformat:"f" }},
+      lieu: "{{ demande.emplacement.libelle }}",
+      etudiant: "{{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}",
+      materiel: "{% for ligne in demande.lignes.all %}{{ ligne.materiel.nom }}{% endfor %}",
+      date_fin: "{{ demande.date_fin|date:'d/m/Y' }}"
+    },
+    {% endif %}
+    {% endfor %}
+  ];
+
+  // Icônes
+  var iconeDestination = L.divIcon({
+    html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '', iconSize: [16,16], iconAnchor: [8,8]
+  });
+
+  var iconePosition = L.divIcon({
+    html: '<div style="width:14px;height:14px;background:#27ae60;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:pulse 1.5s infinite;"></div>',
+    className: '', iconSize: [14,14], iconAnchor: [7,7]
+  });
+
+  var iconeAlerte = L.divIcon({
+    html: '<div style="width:16px;height:16px;background:#e74c3c;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '', iconSize: [16,16], iconAnchor: [8,8]
+  });
+
+  // Placer marqueurs destinations
+  demandes.forEach(function(d) {
+    var m = L.marker([d.lat, d.lng], {icon: iconeDestination}).addTo(map);
+    m.bindPopup(
+      '<div class="materiel-popup">' +
+      '<strong>' + d.etudiant + '</strong><br>' +
+      '<small>' + d.materiel + '</small><br>' +
+      '<small class="text-muted">Lieu prévu : ' + d.lieu + '</small><br>' +
+      '<small class="text-muted">Fin : ' + d.date_fin + '</small>' +
+      '</div>'
+    );
+    marqueurs[d.id] = {destination: m, position: null};
+
+    // Zone autorisée (cercle 50km)
+    var cercle = L.circle([d.lat, d.lng], {
+      radius: 50000,
+      color: '#1a5276',
+      fillColor: '#1a5276',
+      fillOpacity: 0.05,
+      weight: 1,
+      dashArray: '5, 5'
+    }).addTo(map);
+    cercles[d.id] = cercle;
+  });
+
+  // Mettre à jour positions en temps réel
+  function mettreAJourPositions() {
+    demandes.forEach(function(d) {
+      fetch('/emprunts/' + d.id + '/positions/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.positions.length > 0) {
+            var pos = data.positions[0];
+
+            // Calculer distance
+            var dist = calculerDistance(
+              pos.lat, pos.lng, d.lat, d.lng
+            );
+
+            // Choisir icône selon zone
+            var icone = dist > 50 ? iconeAlerte : iconePosition;
+
+            // Mettre à jour marqueur position
+            if (marqueurs[d.id].position) {
+              map.removeLayer(marqueurs[d.id].position);
+            }
+            var m = L.marker([pos.lat, pos.lng], {icon: icone}).addTo(map);
+            m.bindPopup(
+              '<div class="materiel-popup">' +
+              '<strong>Position actuelle</strong><br>' +
+              '<small>' + d.etudiant + '</small><br>' +
+              '<small>' + d.materiel + '</small><br>' +
+              (dist > 50 ?
+                '<span style="color:#e74c3c;font-weight:700;">⚠️ HORS ZONE ! ' +
+                dist.toFixed(1) + ' km</span>' :
+                '<span style="color:#27ae60;">✓ Dans la zone (' +
+                dist.toFixed(1) + ' km)</span>') +
+              '<br><small class="text-muted">Mis à jour : ' + pos.date + '</small>' +
+              '</div>'
+            );
+            marqueurs[d.id].position = m;
+
+            // Tracer trajet
+            if (data.positions.length > 1) {
+              var coords = data.positions.map(function(p) {
+                return [p.lat, p.lng];
+              });
+              L.polyline(coords, {
+                color: dist > 50 ? '#e74c3c' : '#27ae60',
+                weight: 3,
+                opacity: 0.6,
+                dashArray: '6, 3'
+              }).addTo(map);
+            }
+          }
+        });
+    });
+  }
+
+  function calculerDistance(lat1, lon1, lat2, lon2) {
+    var R = 6371;
+    var dlat = (lat2-lat1) * Math.PI/180;
+    var dlon = (lon2-lon1) * Math.PI/180;
+    var a = Math.sin(dlat/2)*Math.sin(dlat/2) +
+      Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+      Math.sin(dlon/2)*Math.sin(dlon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function centrerSur(id) {
+    if (marqueurs[id] && marqueurs[id].position) {
+      map.setView(marqueurs[id].position.getLatLng(), 15);
+      marqueurs[id].position.openPopup();
+    } else if (marqueurs[id]) {
+      map.setView(marqueurs[id].destination.getLatLng(), 15);
+      marqueurs[id].destination.openPopup();
+    }
+  }
+
+  // Mettre à jour toutes les 10 secondes
+  mettreAJourPositions();
+  setInterval(mettreAJourPositions, 10000);
+</script>
+{% endblock %}

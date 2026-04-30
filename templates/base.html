@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titre %}UFR SI — Gestion Matériel{% endblock %}</title>
+  {% load static %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">
+      <i class="bi bi-geo-alt-fill"></i>
+    </div>
+    <div>
+      <h4>UFR SI</h4>
+      <p>Gestion du matériel</p>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+
+    <div class="nav-section">Principal</div>
+    <a href="{% url 'accueil' %}" class="sidebar-link">
+      <i class="bi bi-house"></i> Accueil
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'tableau_de_bord' %}" class="sidebar-link">
+      <i class="bi bi-speedometer2"></i> Tableau de bord
+    </a>
+    {% endif %}
+
+    <div class="nav-section">Matériel</div>
+    <a href="{% url 'liste_materiels' %}" class="sidebar-link">
+      <i class="bi bi-box-seam"></i> Catalogue
+    </a>
+    {% if user.is_authenticated %}
+    <a href="{% url 'liste_demandes' %}" class="sidebar-link">
+      <i class="bi bi-clipboard-check"></i> Mes emprunts
+    </a>
+    <a href="{% url 'nouvelle_demande' %}" class="sidebar-link">
+      <i class="bi bi-plus-circle"></i> Nouvelle demande
+    </a>
+    {% endif %}
+
+    <div class="nav-section">Pédagogie</div>
+    <a href="{% url 'liste_cours' %}" class="sidebar-link">
+      <i class="bi bi-journal-text"></i> Cahier de textes
+    </a>
+
+    <div class="nav-section">Clubs</div>
+    <a href="{% url 'liste_clubs' %}" class="sidebar-link">
+      <i class="bi bi-people"></i> Tous les clubs
+    </a>
+    <a href="{% url 'classement_clubs' %}" class="sidebar-link">
+      <i class="bi bi-trophy"></i> Classement
+    </a>
+
+    {% if user.is_authenticated %}
+    {% if user.role == 'admin' %}
+    <div class="nav-section">Administration</div>
+    <a href="{% url 'dashboard_admin' %}" class="sidebar-link">
+      <i class="bi bi-speedometer"></i> Dashboard admin
+    </a>
+    <a href="{% url 'carte_admin' %}" class="sidebar-link">
+      <i class="bi bi-map"></i> Carte globale
+    </a>
+    <a href="/admin/" class="sidebar-link">
+      <i class="bi bi-shield-lock"></i> Administration
+    </a>
+    {% endif %}
+
+    <div class="nav-section">Mon compte</div>
+    <a href="{% url 'mes_notifications' %}" class="sidebar-link">
+      <i class="bi bi-bell"></i> Notifications
+    </a>
+    <a href="{% url 'parametres' %}" class="sidebar-link">
+      <i class="bi bi-gear"></i> Paramètres
+    </a>
+    <a href="{% url 'deconnexion' %}" class="sidebar-link">
+      <i class="bi bi-box-arrow-left"></i> Déconnexion
+    </a>
+    {% else %}
+    <div class="nav-section">Compte</div>
+    <a href="{% url 'connexion' %}" class="sidebar-link">
+      <i class="bi bi-box-arrow-in-right"></i> Se connecter
+    </a>
+    <a href="{% url 'inscription' %}" class="sidebar-link">
+      <i class="bi bi-person-plus"></i> S'inscrire
+    </a>
+    {% endif %}
+
+  </nav>
+</div>
+
+<!-- Overlay mobile -->
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="d-flex align-items-center gap-3">
+    <button class="hamburger" onclick="toggleSidebar()">
+      <i class="bi bi-list"></i>
+    </button>
+    <span class="topbar-title">{% block page_titre %}UFR SI{% endblock %}</span>
+  </div>
+  <div class="topbar-right">
+    {% if user.is_authenticated %}
+    <a href="{% url 'mes_notifications' %}" class="topbar-btn position-relative" title="Notifications">
+      <i class="bi bi-bell"></i>
+      <span class="notif-badge" id="notif-badge" style="display:none;"></span>
+    </a>
+    {% if user.role == 'admin' %}
+    <a href="{% url 'dashboard_admin' %}" class="topbar-btn" title="Dashboard">
+      <i class="bi bi-speedometer"></i>
+    </a>
+    {% endif %}
+    <div class="dropdown">
+      <button class="user-avatar dropdown-toggle" data-bs-toggle="dropdown"
+              style="border:none;">
+        {{ user.first_name|first|upper|default:"U" }}{{ user.last_name|first|upper|default:"" }}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li class="px-3 py-2 border-bottom">
+          <strong style="font-size:14px;">
+            {{ user.get_full_name|default:user.username }}
+          </strong>
+          <p class="text-muted small mb-0">{{ user.role }}</p>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'tableau_de_bord' %}">
+            <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'parametres' %}">
+            <i class="bi bi-gear me-2"></i>Paramètres
+          </a>
+        </li>
+        {% if user.role == 'admin' %}
+        <li>
+          <a class="dropdown-item" href="{% url 'dashboard_admin' %}">
+            <i class="bi bi-speedometer me-2"></i>Dashboard admin
+          </a>
+        </li>
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item text-danger" href="{% url 'deconnexion' %}">
+            <i class="bi bi-box-arrow-left me-2"></i>Déconnexion
+          </a>
+        </li>
+      </ul>
+    </div>
+    {% else %}
+    <a href="{% url 'connexion' %}" class="btn btn-primary btn-sm">
+      Se connecter
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Contenu -->
+<div class="main-content">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+  {% block contenu %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
