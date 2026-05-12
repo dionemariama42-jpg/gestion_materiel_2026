@@ -5,39 +5,55 @@
 {% block contenu %}
 <div class="row justify-content-center">
   <div class="col-md-8">
-    {% if notifications %}
+
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <p class="text-muted mb-0">{{ notifications.count }} notification(s)</p>
+      <p class="text-muted mb-0">
+        {{ notifications.count }} notification(s) au total
+      </p>
+      {% if notifications %}
+      <form method="post" action="{% url 'supprimer_notifications' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash me-1"></i>Tout supprimer
+        </button>
+      </form>
+      {% endif %}
     </div>
-    {% for notif in notifications %}
-    <div class="card mb-3" style="border-left: 4px solid
-         {% if not notif.lu %}var(--primary){% else %}#e2e8f0{% endif %};">
-      <div class="card-body d-flex justify-content-between align-items-center">
-        <div class="d-flex gap-3 align-items-start">
-          <div style="width:42px; height:42px; border-radius:50%; flex-shrink:0;
-               background:{% if not notif.lu %}var(--primary){% else %}#f0f4f8{% endif %};
-               color:{% if not notif.lu %}white{% else %}#94a3b8{% endif %};
-               display:flex; align-items:center; justify-content:center;">
-            <i class="bi bi-bell"></i>
+
+    {% if notifications %}
+      {% for notif in notifications %}
+      <div class="card mb-2" style="border-left: 4px solid
+           {% if not notif.lu %}var(--primary){% else %}#e2e8f0{% endif %};">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div class="d-flex gap-3 align-items-start">
+            <div style="width:42px; height:42px; border-radius:50%; flex-shrink:0;
+                 background:{% if not notif.lu %}var(--primary){% else %}#f0f4f8{% endif %};
+                 color:{% if not notif.lu %}white{% else %}#94a3b8{% endif %};
+                 display:flex; align-items:center; justify-content:center; font-size:18px;">
+              {% if 'Restitution' in notif.message %}✅
+              {% elif 'RETARD' in notif.message %}❌
+              {% elif 'Rappel' in notif.message %}⏰
+              {% elif 'ALERTE' in notif.message %}🚨
+              {% elif 'approuvée' in notif.message %}✔️
+              {% elif 'refusée' in notif.message %}❌
+              {% else %}<i class="bi bi-bell"></i>
+              {% endif %}
+            </div>
+            <div>
+              <p class="mb-1" style="font-size:14px;">{{ notif.message }}</p>
+              <p class="text-muted small mb-0">
+                <i class="bi bi-clock me-1"></i>{{ notif.date|date:"d/m/Y H:i" }}
+              </p>
+            </div>
           </div>
-          <div>
-            {% if not notif.lu %}
-            <span class="badge bg-primary mb-1">Nouveau</span>
-            {% endif %}
-            <p class="mb-1" style="font-size:14px;">{{ notif.message }}</p>
-            <p class="text-muted small mb-0">
-              <i class="bi bi-clock me-1"></i>{{ notif.date|date:"d/m/Y H:i" }}
-            </p>
-          </div>
+          {% if notif.lien %}
+          <a href="{{ notif.lien }}" class="btn btn-sm btn-outline-primary flex-shrink-0">
+            <i class="bi bi-arrow-right"></i>
+          </a>
+          {% endif %}
         </div>
-        {% if notif.lien %}
-        <a href="{{ notif.lien }}" class="btn btn-sm btn-outline-primary flex-shrink-0">
-          <i class="bi bi-arrow-right"></i>
-        </a>
-        {% endif %}
       </div>
-    </div>
-    {% endfor %}
+      {% endfor %}
     {% else %}
     <div class="card p-5 text-center">
       <i class="bi bi-bell-slash display-4 text-muted mb-3"></i>

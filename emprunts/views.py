@@ -45,8 +45,12 @@ def nouvelle_demande(request):
         )
         for mid in materiel_ids:
             mat = Materiel.objects.get(id=mid)
-            LigneDemande.objects.create(demande=demande, materiel=mat, quantite=1)
-
+            quantite = int(request.POST.get(f'quantite_{mid}', 1))
+            LigneDemande.objects.create(
+            demande=demande,
+            materiel=mat,
+            quantite=quantite
+        )
         Emplacement.objects.create(
             demande=demande,
             libelle=libelle,
@@ -86,19 +90,90 @@ def restituer(request, pk):
     if request.method == 'POST':
         etat_materiel = request.POST['etat_materiel']
         observations = request.POST['observations']
-        Restitution.objects.create(
+        photo = request.FILES.get('photo', None)
+
+        restitution = Restitution.objects.create(
             demande=demande,
             etat_materiel=etat_materiel,
             observations=observations,
         )
+        if photo:
+            restitution.photo = photo
+            restitution.save()
+
+        # Statut en attente de vérification
+        demande.statut = 'en_attente_restitution'
+        demande.save()
+
+        from clubs.models import Notification
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        # Notification à l'étudiant
+        Notification.objects.create(
+            destinataire=demande.utilisateur,
+            message=f'⏳ Votre restitution pour la demande #{demande.id} '
+                   f'est en attente de vérification par l\'admin.',
+            lien=f'/emprunts/{demande.id}/'
+        )
+
+        # Notification à l'admin
+        admins = User.objects.filter(role='admin')
+        for admin in admins:
+            Notification.objects.create(
+                destinataire=admin,
+                message=f'📦 {demande.utilisateur.get_full_name() or demande.utilisateur.username} '
+                       f'a déposé le matériel — Demande #{demande.id} — '
+                       f'État déclaré : {etat_materiel}. '
+                       f'Veuillez vérifier et confirmer.',
+                lien=f'/emprunts/{demande.id}/'
+            )
+
+        messages.success(request, 'Restitution soumise ! En attente de vérification par l\'admin.')
+        return redirect('liste_demandes')
+    return render(request, 'emprunts/restituer.html', {'demande': demande})
+
+
+@login_required
+def confirmer_restitution(request, pk):
+    demande = get_object_or_404(Demande, pk=pk)
+    if request.user.role != 'admin':
+        messages.error(request, 'Accès refusé.')
+        return redirect('liste_demandes')
+
+    if request.method == 'POST':
         demande.statut = 'restituee'
         demande.save()
+
+        # Remettre le matériel disponible
         for ligne in demande.lignes.all():
             ligne.materiel.etat = 'disponible'
             ligne.materiel.save()
-        messages.success(request, 'Restitution enregistrée avec succès !')
+
+        from clubs.models import Notification
+
+        # Notification à l'étudiant
+        Notification.objects.create(
+            destinataire=demande.utilisateur,
+            message=f'✅ Restitution confirmée par l\'admin pour la demande '
+                   f'#{demande.id}. Merci !',
+            lien=f'/emprunts/{demande.id}/'
+        )
+
+        # Notification à l'admin
+        Notification.objects.create(
+            destinataire=request.user,
+            message=f'✅ Vous avez confirmé la restitution de la demande '
+                   f'#{demande.id}.',
+            lien=f'/emprunts/{demande.id}/'
+        )
+
+        messages.success(request, 'Restitution confirmée avec succès !')
         return redirect('liste_demandes')
-    return render(request, 'emprunts/restituer.html', {'demande': demande})
+
+    return render(request, 'emprunts/confirmer_restitution.html', {
+        'demande': demande
+    })
 
 @login_required
 def suivi_gps(request, pk):

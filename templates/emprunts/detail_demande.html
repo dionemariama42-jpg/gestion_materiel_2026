@@ -178,21 +178,24 @@
 
 {% block scripts %}
 {% if demande.emplacement %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var lat = {{ demande.emplacement.latitude }};
-  var lng = {{ demande.emplacement.longitude }};
-  var lieu = "{{ demande.emplacement.libelle }}";
-  var map = L.map('map').setView([lat, lng], 14);
-  L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  var icon = L.divIcon({
-    html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+  document.addEventListener('DOMContentLoaded', function() {
+    var lat = {{ demande.emplacement.latitude|stringformat:"f" }};
+    var lng = {{ demande.emplacement.longitude|stringformat:"f" }};
+    var lieu = "{{ demande.emplacement.libelle }}";
+    var map = L.map('map').setView([lat, lng], 14);
+    L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    var icon = L.divIcon({
+      html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+      className: '',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+    L.marker([lat, lng], {icon: icon}).addTo(map)
+      .bindPopup('<strong>' + lieu + '</strong>').openPopup();
   });
-  L.marker([lat, lng], {icon: icon}).addTo(map)
-    .bindPopup('<strong>' + lieu + '</strong>').openPopup();
 </script>
 {% endif %}
 {% endblock %}

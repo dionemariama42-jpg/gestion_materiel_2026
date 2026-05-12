@@ -202,9 +202,16 @@ def mes_notifications(request):
     notifications = Notification.objects.filter(
         destinataire=request.user
     ).order_by('-date')
+    
+    # Compter non lues avant de les marquer
+    non_lues = notifications.filter(lu=False).count()
+    
+    # Marquer toutes comme lues
     notifications.filter(lu=False).update(lu=True)
+    
     return render(request, 'clubs/notifications.html', {
-        'notifications': notifications
+        'notifications': notifications,
+        'non_lues': non_lues
     })
 
 
@@ -235,3 +242,10 @@ def count_notifications(request):
             }
         return JsonResponse({'count': count, 'derniere': derniere})
     return JsonResponse({'count': 0, 'derniere': None})
+
+@login_required
+def supprimer_notifications(request):
+    if request.method == 'POST':
+        Notification.objects.filter(destinataire=request.user).delete()
+        messages.success(request, 'Toutes les notifications supprimées.')
+    return redirect('mes_notifications')

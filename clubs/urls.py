@@ -12,4 +12,5 @@ urlpatterns = [
     path('notifications/', views.mes_notifications, name='mes_notifications'),
     path('notifications/count/', views.count_notifications, name='count_notifications'),
     path('classement/', views.classement_clubs, name='classement_clubs'),
+    path('notifications/supprimer/', views.supprimer_notifications, name='supprimer_notifications'),
 ]

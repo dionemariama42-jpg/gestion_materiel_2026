@@ -71,29 +71,34 @@
             <label class="form-label">Matériels souhaités</label>
             <div class="row g-2">
               {% for materiel in materiels %}
-              <div class="col-md-6">
-                <div class="card p-3" style="cursor:pointer; border: 2px solid #e2e8f0;
-                     transition: all 0.3s;"
-                     onclick="toggleMateriel(this, '{{ materiel.id }}')">
-                  <div class="d-flex align-items-center gap-3">
-                    <input type="checkbox" name="materiels" value="{{ materiel.id }}"
-                           id="mat{{ materiel.id }}" style="display:none;">
-                    <div style="width:40px; height:40px; border-radius:10px;
-                         background:#f0f4f8; display:flex; align-items:center;
-                         justify-content:center; flex-shrink:0;">
-                      <i class="bi bi-box-seam" style="color:var(--primary);"></i>
-                    </div>
-                    <div>
-                      <strong style="font-size:13px;">{{ materiel.nom }}</strong>
-                      <p class="mb-0 text-muted" style="font-size:12px;">
-                        {{ materiel.numero_serie }}
-                      </p>
-                    </div>
-                    <span class="badge bg-success ms-auto">Disponible</span>
-                  </div>
-                </div>
-              </div>
-              {% endfor %}
+<div class="col-md-6">
+  <div class="card p-3" style="cursor:pointer; border: 2px solid #e2e8f0; transition: all 0.3s;"
+       onclick="toggleMateriel(this, '{{ materiel.id }}')">
+    <div class="d-flex align-items-center gap-3">
+      <input type="checkbox" name="materiels" value="{{ materiel.id }}"
+             id="mat{{ materiel.id }}" style="display:none;">
+      <div style="width:40px; height:40px; border-radius:10px;
+           background:#f0f4f8; display:flex; align-items:center;
+           justify-content:center; flex-shrink:0;">
+        <i class="bi bi-box-seam" style="color:var(--primary);"></i>
+      </div>
+      <div class="flex-grow-1">
+        <strong style="font-size:13px;">{{ materiel.nom }}</strong>
+        <p class="mb-0 text-muted" style="font-size:12px;">{{ materiel.numero_serie }}</p>
+      </div>
+      <span class="badge bg-success">Disponible</span>
+    </div>
+    <!-- Quantité -->
+    <div id="qte{{ materiel.id }}" class="d-flex align-items-center gap-2 mt-2"
+         style="display:none !important;">
+      <label style="font-size:12px; color:#64748b;">Quantité :</label>
+      <input type="number" name="quantite_{{ materiel.id }}"
+             class="form-control form-control-sm" value="1" min="1" max="10"
+             style="width:70px;" onclick="event.stopPropagation()">
+    </div>
+  </div>
+</div>
+{% endfor %}
             </div>
           </div>
 

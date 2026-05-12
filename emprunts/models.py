@@ -5,12 +5,13 @@ from materiel.models import Materiel
 
 class Demande(models.Model):
     STATUTS = [
-        ('en_attente', 'En attente'),
-        ('approuvee', 'Approuvée'),
-        ('refusee', 'Refusée'),
-        ('en_cours', 'En cours'),
-        ('restituee', 'Restituée'),
-    ]
+    ('en_attente', 'En attente'),
+    ('approuvee', 'Approuvée'),
+    ('refusee', 'Refusée'),
+    ('en_cours', 'En cours'),
+    ('en_attente_restitution', 'En attente de vérification'),
+    ('restituee', 'Restituée'),
+]
     utilisateur = models.ForeignKey(
         Utilisateur,
         on_delete=models.CASCADE,
@@ -19,7 +20,7 @@ class Demande(models.Model):
     date_demande = models.DateTimeField(auto_now_add=True)
     date_debut = models.DateTimeField()
     date_fin = models.DateTimeField()
-    statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
+    statut = models.CharField(max_length=30, choices=STATUTS, default='en_attente')
     motif = models.TextField(blank=True)
 
     def __str__(self):

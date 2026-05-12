@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block titre %}Confirmer restitution — UFR SI{% endblock %}
+{% block page_titre %}Confirmer la restitution{% endblock %}
+
+{% block contenu %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-check-circle me-2"></i>
+        Vérification de la restitution — Demande #{{ demande.id }}
+      </div>
+      <div class="card-body">
+
+        <div class="alert alert-info mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          Vérifiez physiquement le matériel avant de confirmer.
+        </div>
+
+        <p><strong>Étudiant :</strong>
+          {{ demande.utilisateur.get_full_name|default:demande.utilisateur.username }}
+        </p>
+        <p><strong>Matériel :</strong>
+          {% for ligne in demande.lignes.all %}
+          <span class="badge bg-light text-dark me-1">
+            {{ ligne.materiel.nom }} (x{{ ligne.quantite }})
+          </span>
+          {% endfor %}
+        </p>
+
+        {% if demande.restitution %}
+        <p><strong>État déclaré :</strong>
+          {% if demande.restitution.etat_materiel == 'bon' %}
+          <span class="badge bg-success">Bon état</span>
+          {% elif demande.restitution.etat_materiel == 'abime' %}
+          <span class="badge bg-warning text-dark">Abîmé</span>
+          {% elif demande.restitution.etat_materiel == 'perdu' %}
+          <span class="badge bg-danger">Perdu</span>
+          {% endif %}
+        </p>
+        <p><strong>Observations :</strong>
+          {{ demande.restitution.observations|default:"Aucune" }}
+        </p>
+        {% if demande.restitution.photo %}
+        <p><strong>Photo :</strong></p>
+        <img src="{{ demande.restitution.photo.url }}"
+             class="img-fluid rounded mb-3" style="max-height:200px;">
+        {% endif %}
+        {% endif %}
+
+        <hr>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-check-circle me-2"></i>
+              Confirmer la restitution
+            </button>
+            <a href="{% url 'liste_demandes' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>
+              Annuler
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

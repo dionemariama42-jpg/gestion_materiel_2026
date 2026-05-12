@@ -125,7 +125,6 @@ function verifierNouvellesNotifications() {
 
       // Afficher popup si nouvelle notification
       if (data.derniere && data.derniere.id !== derniereNotifId) {
-        // Ne pas afficher si on est déjà sur la page notifications
         if (!window.location.href.includes('notifications')) {
           afficherPopupNotification(
             data.derniere.message,
@@ -215,4 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   const statsSection = document.querySelector('.stats-section');
   if (statsSection) observer.observe(statsSection);
+  // Si on est sur la page notifications — badge disparaît
+  if (window.location.href.includes('notifications')) {
+  var badge = document.getElementById('notif-badge');
+  if (badge) badge.style.display = 'none';
+  derniereNotifId = 0;
+  localStorage.removeItem('derniereNotifId');
+}
 });

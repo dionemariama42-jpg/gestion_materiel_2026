@@ -48,10 +48,11 @@ class Materiel(models.Model):
         self.code_qr.save(nom_fichier, File(buffer), save=False)
 
     def save(self, *args, **kwargs):
+        is_new = self.pk is None
         super().save(*args, **kwargs)
-        if not self.code_qr:
+        if is_new and not self.code_qr:
             self.generer_qr()
-            super().save(*args, **kwargs)
+            super().save(update_fields=['code_qr'])
 
 
 class Maintenance(models.Model):

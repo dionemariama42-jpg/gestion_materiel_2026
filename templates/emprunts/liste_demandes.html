@@ -52,6 +52,8 @@
               <span class="badge bg-info">Approuvée</span>
             {% elif demande.statut == 'en_cours' %}
               <span class="badge bg-success">En cours</span>
+            {% elif demande.statut == 'en_attente_restitution' %}
+              <span class="badge bg-info">En vérification</span>
             {% elif demande.statut == 'restituee' %}
               <span class="badge bg-secondary">Restituée</span>
             {% elif demande.statut == 'refusee' %}
@@ -67,6 +69,12 @@
             <a href="{% url 'restituer' demande.id %}"
                class="btn btn-sm btn-outline-success">
               <i class="bi bi-arrow-return-left"></i>
+            </a>
+            {% endif %}
+            {% if demande.statut == 'en_attente_restitution' and request.user.role == 'admin' %}
+            <a href="{% url 'confirmer_restitution' demande.id %}"
+               class="btn btn-sm btn-success">
+              <i class="bi bi-check-circle"></i>
             </a>
             {% endif %}
           </td>
