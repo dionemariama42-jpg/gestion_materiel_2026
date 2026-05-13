@@ -5,14 +5,11 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  #map { height: 350px; border-radius: 12px; }
-  .search-box {
-    position: relative;
-  }
+  #map { height: 300px; border-radius: 12px; }
+  .search-box { position: relative; }
   .search-results {
     position: absolute;
-    top: 100%;
-    left: 0; right: 0;
+    top: 100%; left: 0; right: 0;
     background: white;
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -26,205 +23,265 @@
     cursor: pointer;
     font-size: 13px;
     border-bottom: 1px solid #f0f4f8;
-    transition: background 0.2s;
   }
   .search-result-item:hover { background: #f0f4f8; }
-  .search-result-item:last-child { border-bottom: none; }
-  .coord-badge {
-    background: #f0f4f8;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #64748b;
+  .materiel-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
   }
+  .materiel-card:hover { border-color: var(--primary); }
+  .materiel-card.selected {
+    border-color: var(--primary);
+    background: #eef4fb;
+  }
+  .stock-badge-ok { background: #27ae60; color: white; }
+  .stock-badge-low { background: #f39c12; color: white; }
+  .stock-badge-empty { background: #e74c3c; color: white; }
 </style>
 {% endblock %}
 
 {% block contenu %}
 <div class="row g-4">
   <div class="col-md-8">
-    <div class="card">
-      <div class="card-header">
-        <i class="bi bi-clipboard-plus me-2"></i>Informations de la demande
-      </div>
-      <div class="card-body">
-        <form method="post" id="form-demande">
-          {% csrf_token %}
-          <div class="row mb-3">
-  <div class="col-md-6">
-    <label class="form-label">Date et heure de début</label>
-    <input type="datetime-local" name="date_debut" class="form-control" required>
-  </div>
-  <div class="col-md-6">
-    <label class="form-label">Date et heure de fin</label>
-    <input type="datetime-local" name="date_fin" class="form-control" required>
-  </div>
-</div>
+    <form method="post" id="form-demande">
+      {% csrf_token %}
 
-          <div class="mb-4">
-            <label class="form-label">Motif de la demande</label>
-            <textarea name="motif" class="form-control" rows="3"
-              placeholder="Expliquez pourquoi vous avez besoin de ce matériel..."></textarea>
-          </div>
+      {% if club %}
+      <input type="hidden" name="club_id" value="{{ club.id }}">
+      <div class="alert alert-info mb-4">
+        <i class="bi bi-people me-2"></i>
+        Demande de matériel pour le club <strong>{{ club.nom }}</strong>
+      </div>
+      {% endif %}
 
-          <div class="mb-4">
-            <label class="form-label">Matériels souhaités</label>
-            <div class="row g-2">
-              {% for materiel in materiels %}
-<div class="col-md-6">
-  <div class="card p-3" style="cursor:pointer; border: 2px solid #e2e8f0; transition: all 0.3s;"
-       onclick="toggleMateriel(this, '{{ materiel.id }}')">
-    <div class="d-flex align-items-center gap-3">
-      <input type="checkbox" name="materiels" value="{{ materiel.id }}"
-             id="mat{{ materiel.id }}" style="display:none;">
-      <div style="width:40px; height:40px; border-radius:10px;
-           background:#f0f4f8; display:flex; align-items:center;
-           justify-content:center; flex-shrink:0;">
-        <i class="bi bi-box-seam" style="color:var(--primary);"></i>
-      </div>
-      <div class="flex-grow-1">
-        <strong style="font-size:13px;">{{ materiel.nom }}</strong>
-        <p class="mb-0 text-muted" style="font-size:12px;">{{ materiel.numero_serie }}</p>
-      </div>
-      <span class="badge bg-success">Disponible</span>
-    </div>
-    <!-- Quantité -->
-    <div id="qte{{ materiel.id }}" class="d-flex align-items-center gap-2 mt-2"
-         style="display:none !important;">
-      <label style="font-size:12px; color:#64748b;">Quantité :</label>
-      <input type="number" name="quantite_{{ materiel.id }}"
-             class="form-control form-control-sm" value="1" min="1" max="10"
-             style="width:70px;" onclick="event.stopPropagation()">
-    </div>
-  </div>
-</div>
-{% endfor %}
+      <!-- Dates -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-calendar me-2"></i>Période d'emprunt
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Date et heure de début</label>
+              <input type="datetime-local" name="date_debut"
+                     class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date et heure de fin</label>
+              <input type="datetime-local" name="date_fin"
+                     class="form-control" required>
             </div>
           </div>
+          <div class="mt-3">
+            <label class="form-label">Motif de la demande</label>
+            <textarea name="motif" class="form-control" rows="2"
+              placeholder="Expliquez pourquoi vous avez besoin de ce matériel..."></textarea>
+          </div>
+        </div>
+      </div>
 
-          <hr>
-          <h6 class="mb-3">
-            <i class="bi bi-geo-alt me-2"></i>Localisation terrain
-          </h6>
+      <!-- Matériels -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-box-seam me-2"></i>Sélection des matériels
+        </div>
+        <div class="card-body">
 
-          <!-- Recherche lieu -->
+          <!-- Filtre catégorie -->
+          <div class="mb-3">
+            <select class="form-select" id="filtre-categorie"
+                    onchange="filtrerCategorie(this.value)">
+              <option value="">Toutes les catégories</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.libelle }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="row g-2" id="liste-materiels">
+            {% for materiel in materiels %}
+            <div class="col-md-6 materiel-item"
+                 data-categorie="{{ materiel.categorie.id }}">
+              <div class="materiel-card" id="card-{{ materiel.id }}"
+                   onclick="toggleMateriel('{{ materiel.id }}')">
+                <input type="checkbox" name="materiels"
+                       value="{{ materiel.id }}"
+                       id="mat{{ materiel.id }}" style="display:none;">
+                <div class="d-flex align-items-start gap-3">
+                  <div style="width:38px; height:38px; border-radius:10px;
+                       background:#f0f4f8; display:flex; align-items:center;
+                       justify-content:center; flex-shrink:0; margin-top:2px;">
+                    <i class="bi bi-box-seam"
+                       style="color:var(--primary); font-size:16px;"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <strong style="font-size:13px; display:block;">
+                      {{ materiel.nom }}
+                    </strong>
+                    <small class="text-muted">{{ materiel.categorie }}</small>
+                    <div class="mt-1">
+                      <span class="badge
+                        {% if materiel.quantite_disponible > 5 %}stock-badge-ok
+                        {% elif materiel.quantite_disponible > 0 %}stock-badge-low
+                        {% else %}stock-badge-empty{% endif %}"
+                        style="font-size:11px;">
+                        {{ materiel.quantite_disponible }} disponible(s)
+                        / {{ materiel.quantite_stock }} total
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Quantité -->
+                <div id="qte{{ materiel.id }}" class="mt-2" style="display:none;"
+                     onclick="event.stopPropagation()">
+                  <div class="d-flex align-items-center gap-2">
+                    <label style="font-size:12px; color:#64748b; white-space:nowrap;">
+                      Quantité :
+                    </label>
+                    <input type="number"
+                           name="quantite_{{ materiel.id }}"
+                           class="form-control form-control-sm"
+                           value="1" min="1"
+                           max="{{ materiel.quantite_disponible }}"
+                           style="width:80px;">
+                    <small class="text-muted">
+                      (max {{ materiel.quantite_disponible }})
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center text-muted py-4">
+              <i class="bi bi-inbox display-4 d-block mb-2"></i>
+              Aucun matériel disponible
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Localisation -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-geo-alt me-2"></i>Localisation terrain
+        </div>
+        <div class="card-body">
           <div class="mb-3 search-box">
             <label class="form-label">Rechercher un lieu</label>
             <div class="input-group">
-              <span class="input-group-text" style="border-radius:10px 0 0 10px;">
+              <span class="input-group-text"
+                    style="border-radius:10px 0 0 10px;">
                 <i class="bi bi-search"></i>
               </span>
               <input type="text" id="recherche-lieu" class="form-control"
-                     placeholder="Ex: Université de Thiès, Plateau de Thiès..."
+                     placeholder="Ex: Universite de Thies..."
                      style="border-radius:0 10px 10px 0;"
                      oninput="rechercherLieu(this.value)">
             </div>
             <div class="search-results" id="search-results"></div>
           </div>
-
-          <!-- Nom du lieu -->
           <div class="mb-3">
             <label class="form-label">Nom du lieu</label>
-            <input type="text" name="libelle" id="libelle" class="form-control"
-              placeholder="Ex: Campus UFR SI" required>
+            <input type="text" name="libelle" id="libelle"
+                   class="form-control" placeholder="Ex: Campus UFR SI" required>
           </div>
-
-          <!-- Coordonnées -->
           <div class="row mb-3">
             <div class="col-md-5">
               <label class="form-label">Latitude</label>
               <input type="text" name="latitude" id="latitude"
-                class="form-control" placeholder="Ex: 14.6928"
-                oninput="mettreAJourDepuisCoords()">
+                     class="form-control" placeholder="Ex: 14.6928"
+                     oninput="mettreAJourDepuisCoords()">
             </div>
             <div class="col-md-5">
               <label class="form-label">Longitude</label>
               <input type="text" name="longitude" id="longitude"
-                class="form-control" placeholder="Ex: -17.4467"
-                oninput="mettreAJourDepuisCoords()">
+                     class="form-control" placeholder="Ex: -17.4467"
+                     oninput="mettreAJourDepuisCoords()">
             </div>
             <div class="col-md-2 d-flex align-items-end">
               <button type="button" class="btn btn-outline-primary w-100"
-                      onclick="maPosition()">
+                      onclick="maPosition()" title="Ma position">
                 <i class="bi bi-crosshair"></i>
               </button>
             </div>
           </div>
-
-          <!-- Carte -->
-          <div id="map" class="mb-4"></div>
-
-          <!-- Coordonnées affichées -->
-          <div id="coords-affichees" class="coord-badge mb-4" style="display:none;">
-            <i class="bi bi-geo-alt-fill text-success me-2"></i>
+          <input type="hidden" name="latitude-hidden" id="latitude-hidden">
+          <input type="hidden" name="longitude-hidden" id="longitude-hidden">
+          <div id="map" class="mb-3"></div>
+          <div id="coords-affichees" class="text-muted small"
+               style="display:none;">
+            <i class="bi bi-geo-alt-fill text-success me-1"></i>
             <span id="coords-texte"></span>
           </div>
-
-          <input type="hidden" name="latitude" id="latitude-hidden">
-          <input type="hidden" name="longitude" id="longitude-hidden">
-
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="bi bi-send me-2"></i>Envoyer la demande
-          </button>
-        </form>
+        </div>
       </div>
-    </div>
+
+      <button type="submit" class="btn btn-primary w-100 mb-4">
+        <i class="bi bi-send me-2"></i>Envoyer la demande
+      </button>
+    </form>
   </div>
 
+  <!-- Panneau droit -->
   <div class="col-md-4">
     <div class="card mb-4">
       <div class="card-header">
         <i class="bi bi-info-circle me-2"></i>Instructions
       </div>
       <div class="card-body">
+        {% for num, titre, desc in steps %}
+        {% empty %}
         <div class="d-flex gap-3 mb-3">
-          <div style="width:32px; height:32px; border-radius:50%;
-               background:var(--primary); color:white;
-               display:flex; align-items:center; justify-content:center;
-               font-weight:700; flex-shrink:0; font-size:13px;">1</div>
+          <div style="width:28px; height:28px; border-radius:50%;
+               background:var(--primary); color:white; display:flex;
+               align-items:center; justify-content:center;
+               font-weight:700; font-size:12px; flex-shrink:0;">1</div>
           <div>
-            <strong style="font-size:14px;">Choisissez les dates</strong>
+            <strong style="font-size:13px;">Choisissez les dates</strong>
             <p class="text-muted small mb-0">Sélectionnez la période</p>
           </div>
         </div>
         <div class="d-flex gap-3 mb-3">
-          <div style="width:32px; height:32px; border-radius:50%;
-               background:var(--primary); color:white;
-               display:flex; align-items:center; justify-content:center;
-               font-weight:700; flex-shrink:0; font-size:13px;">2</div>
+          <div style="width:28px; height:28px; border-radius:50%;
+               background:var(--primary); color:white; display:flex;
+               align-items:center; justify-content:center;
+               font-weight:700; font-size:12px; flex-shrink:0;">2</div>
           <div>
-            <strong style="font-size:14px;">Sélectionnez le matériel</strong>
-            <p class="text-muted small mb-0">Cliquez sur les cartes</p>
+            <strong style="font-size:13px;">Sélectionnez le matériel</strong>
+            <p class="text-muted small mb-0">Cliquez sur les cartes et entrez la quantité</p>
           </div>
         </div>
         <div class="d-flex gap-3 mb-3">
-          <div style="width:32px; height:32px; border-radius:50%;
-               background:var(--primary); color:white;
-               display:flex; align-items:center; justify-content:center;
-               font-weight:700; flex-shrink:0; font-size:13px;">3</div>
+          <div style="width:28px; height:28px; border-radius:50%;
+               background:var(--primary); color:white; display:flex;
+               align-items:center; justify-content:center;
+               font-weight:700; font-size:12px; flex-shrink:0;">3</div>
           <div>
-            <strong style="font-size:14px;">Recherchez votre lieu</strong>
-            <p class="text-muted small mb-0">
-              Tapez le nom ou entrez les coordonnées GPS
-            </p>
+            <strong style="font-size:13px;">Localisez sur la carte</strong>
+            <p class="text-muted small mb-0">Recherchez ou cliquez sur la carte</p>
           </div>
         </div>
         <div class="d-flex gap-3">
-          <div style="width:32px; height:32px; border-radius:50%;
-               background:var(--primary); color:white;
-               display:flex; align-items:center; justify-content:center;
-               font-weight:700; flex-shrink:0; font-size:13px;">4</div>
+          <div style="width:28px; height:28px; border-radius:50%;
+               background:var(--primary); color:white; display:flex;
+               align-items:center; justify-content:center;
+               font-weight:700; font-size:12px; flex-shrink:0;">4</div>
           <div>
-            <strong style="font-size:14px;">Envoyez la demande</strong>
+            <strong style="font-size:13px;">Envoyez</strong>
             <p class="text-muted small mb-0">L'admin validera votre demande</p>
           </div>
         </div>
+        {% endfor %}
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <i class="bi bi-shield-check me-2"></i>Règles d'emprunt
+        <i class="bi bi-shield-check me-2"></i>Règles
       </div>
       <div class="card-body">
         <ul class="list-unstyled small text-muted mb-0">
@@ -234,15 +291,11 @@
           </li>
           <li class="mb-2">
             <i class="bi bi-check-circle text-success me-2"></i>
-            Signaler tout incident immédiatement
-          </li>
-          <li class="mb-2">
-            <i class="bi bi-check-circle text-success me-2"></i>
-            Prendre soin du matériel
+            Signaler tout incident
           </li>
           <li class="mb-2">
             <i class="bi bi-x-circle text-danger me-2"></i>
-            Retard = pénalité appliquée
+            Retard = pénalité
           </li>
           <li>
             <i class="bi bi-x-circle text-danger me-2"></i>
@@ -258,66 +311,49 @@
 {% block scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // Initialiser la carte centrée sur Thiès, Sénégal
+  // Carte
   var map = L.map('map').setView([14.6928, -17.4467], 13);
   L.tileLayer('https://a.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
   var marker = null;
 
-  // Icône personnalisée
   var monIcone = L.divIcon({
-    html: '<div style="width:16px;height:16px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
-    className: '',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    html: '<div style="width:14px;height:14px;background:#1a5276;border:3px solid white;border-radius:50%;box-shadow:0 4px 12px rgba(0,0,0,0.3);"></div>',
+    className: '', iconSize: [14,14], iconAnchor: [7,7]
   });
 
-  // Placer marqueur sur la carte
   function placerMarqueur(lat, lng, nom) {
     if (marker) map.removeLayer(marker);
     marker = L.marker([lat, lng], {icon: monIcone}).addTo(map);
     if (nom) marker.bindPopup('<strong>' + nom + '</strong>').openPopup();
     map.setView([lat, lng], 15);
-
-    // Mettre à jour les champs
     document.getElementById('latitude').value = lat.toFixed(6);
     document.getElementById('longitude').value = lng.toFixed(6);
     document.getElementById('latitude-hidden').value = lat.toFixed(6);
     document.getElementById('longitude-hidden').value = lng.toFixed(6);
-
-    // Afficher coordonnées
     document.getElementById('coords-affichees').style.display = 'block';
     document.getElementById('coords-texte').textContent =
       'Lat: ' + lat.toFixed(6) + ' | Lng: ' + lng.toFixed(6);
   }
 
-  // Clic sur la carte
   map.on('click', function(e) {
     placerMarqueur(e.latlng.lat, e.latlng.lng, null);
-
-    // Géocodage inverse pour trouver le nom du lieu
     fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' +
       e.latlng.lat + '&lon=' + e.latlng.lng + '&accept-language=fr')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.display_name) {
-          var nom = data.display_name.split(',').slice(0, 2).join(',');
+          var nom = data.display_name.split(',').slice(0,2).join(',');
           document.getElementById('libelle').value = nom;
-          marker.bindPopup('<strong>' + nom + '</strong>').openPopup();
+          if (marker) marker.bindPopup('<strong>' + nom + '</strong>').openPopup();
         }
       });
   });
 
-  // Rechercher un lieu par nom
   var timeoutRecherche = null;
   function rechercherLieu(query) {
     clearTimeout(timeoutRecherche);
     var results = document.getElementById('search-results');
-
-    if (query.length < 3) {
-      results.style.display = 'none';
-      return;
-    }
-
+    if (query.length < 3) { results.style.display = 'none'; return; }
     timeoutRecherche = setTimeout(function() {
       fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
         encodeURIComponent(query) + '&limit=5&accept-language=fr')
@@ -333,11 +369,11 @@
             var div = document.createElement('div');
             div.className = 'search-result-item';
             div.innerHTML = '<i class="bi bi-geo-alt me-2 text-muted"></i>' +
-              item.display_name.split(',').slice(0, 3).join(',');
+              item.display_name.split(',').slice(0,3).join(',');
             div.onclick = function() {
               var lat = parseFloat(item.lat);
               var lng = parseFloat(item.lon);
-              var nom = item.display_name.split(',').slice(0, 2).join(',');
+              var nom = item.display_name.split(',').slice(0,2).join(',');
               placerMarqueur(lat, lng, nom);
               document.getElementById('libelle').value = nom;
               document.getElementById('recherche-lieu').value = nom;
@@ -350,16 +386,12 @@
     }, 500);
   }
 
-  // Mettre à jour depuis les champs coordonnées
   function mettreAJourDepuisCoords() {
     var lat = parseFloat(document.getElementById('latitude').value);
     var lng = parseFloat(document.getElementById('longitude').value);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      placerMarqueur(lat, lng, 'Position saisie');
-    }
+    if (!isNaN(lat) && !isNaN(lng)) placerMarqueur(lat, lng, 'Position saisie');
   }
 
-  // Ma position GPS
   function maPosition() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(function(pos) {
@@ -368,26 +400,37 @@
     }
   }
 
-  // Sélection matériel
-  function toggleMateriel(card, id) {
-  var checkbox = document.getElementById('mat' + id);
-  checkbox.checked = !checkbox.checked;
-  if (checkbox.checked) {
-    card.style.borderColor = 'var(--primary)';
-    card.style.background = '#eef4fb';
-    document.getElementById('qte' + id).style.display = 'flex';
-  } else {
-    card.style.borderColor = '#e2e8f0';
-    card.style.background = 'white';
-    document.getElementById('qte' + id).style.display = 'none';
-  }
-}
-
-  // Fermer résultats si on clique ailleurs
   document.addEventListener('click', function(e) {
     if (!e.target.closest('.search-box')) {
       document.getElementById('search-results').style.display = 'none';
     }
   });
+
+  // Sélection matériel
+  function toggleMateriel(id) {
+    var checkbox = document.getElementById('mat' + id);
+    var card = document.getElementById('card-' + id);
+    var qte = document.getElementById('qte' + id);
+    checkbox.checked = !checkbox.checked;
+    if (checkbox.checked) {
+      card.classList.add('selected');
+      qte.style.display = 'block';
+    } else {
+      card.classList.remove('selected');
+      qte.style.display = 'none';
+    }
+  }
+
+  // Filtre catégorie
+  function filtrerCategorie(categorieId) {
+    var items = document.querySelectorAll('.materiel-item');
+    items.forEach(function(item) {
+      if (!categorieId || item.dataset.categorie === categorieId) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+  }
 </script>
 {% endblock %}

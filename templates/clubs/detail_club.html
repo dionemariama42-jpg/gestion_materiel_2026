@@ -143,6 +143,10 @@
           <a href="{% url 'nouvelle_activite' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>Créer une activité
           </a>
+          <a href="{% url 'nouvelle_demande' %}?club={{ club.id }}"
+          class="btn btn-outline-primary w-100 mb-2">
+          <i class="bi bi-box-seam me-2"></i>Demander du matériel pour le club
+          </a>
           {% else %}
           <a href="{% url 'payer_cotisation' club.id %}" class="btn btn-success">
             <i class="bi bi-cash me-2"></i>Payer la cotisation

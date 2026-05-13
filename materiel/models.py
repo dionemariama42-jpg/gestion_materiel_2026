@@ -33,12 +33,14 @@ class Materiel(models.Model):
     description = models.TextField(blank=True)
     date_acquisition = models.DateField(null=True, blank=True)
     code_qr = models.ImageField(upload_to='materiels/qrcodes/', blank=True)
+    quantite_stock = models.IntegerField(default=1, verbose_name='Quantité en stock')
+    quantite_disponible = models.IntegerField(default=1, verbose_name='Quantité disponible')
 
     def __str__(self):
         return f"{self.nom} ({self.numero_serie})"
 
     def est_disponible(self):
-        return self.etat == 'disponible'
+        return self.quantite_disponible > 0
 
     def generer_qr(self):
         qr = qrcode.make(f"http://127.0.0.1:8000/materiel/{self.id}/")

@@ -4,13 +4,9 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Demande, LigneDemande, Emplacement, Restitution, PositionTempsReel
-from materiel.models import Materiel
+from materiel.models import Materiel, Categorie
 import json
 import math
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from .models import Demande, LigneDemande, Emplacement, Restitution
-from materiel.models import Materiel
 
 
 @login_required
@@ -26,7 +22,31 @@ def liste_demandes(request):
 
 @login_required
 def nouvelle_demande(request):
-    materiels = Materiel.objects.filter(etat='disponible')
+    from clubs.models import MembreClub, Club
+
+    # Vérifier si demande pour un club
+    club_id = request.GET.get('club') or request.POST.get('club_id')
+    club = None
+    est_president = False
+
+    if club_id:
+        club = Club.objects.filter(id=club_id).first()
+        if club:
+            est_president = MembreClub.objects.filter(
+                club=club,
+                utilisateur=request.user,
+                role='president'
+            ).exists()
+            if not est_president:
+                messages.error(request, 'Seul le président du club peut faire une demande.')
+                return redirect('detail_club', pk=club_id)
+
+    materiels = Materiel.objects.filter(
+        quantite_disponible__gt=0
+    ).select_related('categorie').order_by('categorie__libelle', 'nom')
+
+    categories = Categorie.objects.all().order_by('libelle')
+
     if request.method == 'POST':
         date_debut = request.POST['date_debut']
         date_fin = request.POST['date_fin']
@@ -35,7 +55,38 @@ def nouvelle_demande(request):
         libelle = request.POST.get('libelle', '')
         latitude = request.POST.get('latitude-hidden') or request.POST.get('latitude', 0)
         longitude = request.POST.get('longitude-hidden') or request.POST.get('longitude', 0)
+        club_id_post = request.POST.get('club_id', '')
 
+        if not materiel_ids:
+            messages.error(request, 'Veuillez sélectionner au moins un matériel.')
+            return render(request, 'emprunts/nouvelle_demande.html', {
+                'materiels': materiels,
+                'categories': categories,
+                'club': club,
+            })
+
+        # Vérifier stocks
+        erreurs = []
+        for mid in materiel_ids:
+            quantite = int(request.POST.get(f'quantite_{mid}', 1))
+            mat = Materiel.objects.get(id=mid)
+            if mat.quantite_disponible < quantite:
+                erreurs.append(
+                    f'❌ Stock insuffisant pour "{mat.nom}" — '
+                    f'Disponible : {mat.quantite_disponible}, '
+                    f'Demandé : {quantite}'
+                )
+
+        if erreurs:
+            for erreur in erreurs:
+                messages.error(request, erreur)
+            return render(request, 'emprunts/nouvelle_demande.html', {
+                'materiels': materiels,
+                'categories': categories,
+                'club': club,
+            })
+
+        # Créer la demande
         demande = Demande.objects.create(
             utilisateur=request.user,
             date_debut=date_debut,
@@ -43,14 +94,21 @@ def nouvelle_demande(request):
             motif=motif,
             statut='en_attente'
         )
+
         for mid in materiel_ids:
             mat = Materiel.objects.get(id=mid)
             quantite = int(request.POST.get(f'quantite_{mid}', 1))
             LigneDemande.objects.create(
-            demande=demande,
-            materiel=mat,
-            quantite=quantite
-        )
+                demande=demande,
+                materiel=mat,
+                quantite=quantite
+            )
+            # Réduire stock disponible
+            mat.quantite_disponible -= quantite
+            if mat.quantite_disponible <= 0:
+                mat.etat = 'emprunte'
+            mat.save()
+
         Emplacement.objects.create(
             demande=demande,
             libelle=libelle,
@@ -58,25 +116,36 @@ def nouvelle_demande(request):
             longitude=float(longitude) if longitude else 0,
         )
 
-        # Notifier l'admin
-        from django.contrib.auth import get_user_model
+        # Notifications
         from clubs.models import Notification
+        from django.contrib.auth import get_user_model
         User = get_user_model()
         admins = User.objects.filter(role='admin')
+        club_nom = f' pour le club {club.nom}' if club_id_post else ''
         for admin in admins:
             Notification.objects.create(
                 destinataire=admin,
-                message=f'Nouvelle demande #{demande.id} de {request.user} en attente.',
+                message=f'📋 Nouvelle demande #{demande.id} de '
+                       f'{request.user.get_full_name() or request.user.username}'
+                       f'{club_nom} en attente de validation.',
                 lien=f'/emprunts/{demande.id}/'
             )
         Notification.objects.create(
             destinataire=request.user,
-            message=f'Votre demande #{demande.id} a été soumise avec succès.',
+            message=f'✅ Votre demande #{demande.id}{club_nom} a été soumise avec succès.',
             lien=f'/emprunts/{demande.id}/'
         )
+
         messages.success(request, 'Demande envoyée avec succès !')
         return redirect('liste_demandes')
-    return render(request, 'emprunts/nouvelle_demande.html', {'materiels': materiels})
+
+    return render(request, 'emprunts/nouvelle_demande.html', {
+        'materiels': materiels,
+        'categories': categories,
+        'club': club,
+        'est_president': est_president,
+    })
+
 
 @login_required
 def detail_demande(request, pk):
@@ -101,7 +170,7 @@ def restituer(request, pk):
             restitution.photo = photo
             restitution.save()
 
-        # Statut en attente de vérification
+        # Statut en attente de vérification admin
         demande.statut = 'en_attente_restitution'
         demande.save()
 
@@ -109,7 +178,7 @@ def restituer(request, pk):
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        # Notification à l'étudiant
+        # Notification étudiant
         Notification.objects.create(
             destinataire=demande.utilisateur,
             message=f'⏳ Votre restitution pour la demande #{demande.id} '
@@ -117,19 +186,18 @@ def restituer(request, pk):
             lien=f'/emprunts/{demande.id}/'
         )
 
-        # Notification à l'admin
+        # Notification admins
         admins = User.objects.filter(role='admin')
         for admin in admins:
             Notification.objects.create(
                 destinataire=admin,
                 message=f'📦 {demande.utilisateur.get_full_name() or demande.utilisateur.username} '
                        f'a déposé le matériel — Demande #{demande.id} — '
-                       f'État déclaré : {etat_materiel}. '
-                       f'Veuillez vérifier et confirmer.',
+                       f'État déclaré : {etat_materiel}. Veuillez vérifier.',
                 lien=f'/emprunts/{demande.id}/'
             )
 
-        messages.success(request, 'Restitution soumise ! En attente de vérification par l\'admin.')
+        messages.success(request, 'Restitution soumise ! En attente de vérification.')
         return redirect('liste_demandes')
     return render(request, 'emprunts/restituer.html', {'demande': demande})
 
@@ -145,14 +213,16 @@ def confirmer_restitution(request, pk):
         demande.statut = 'restituee'
         demande.save()
 
-        # Remettre le matériel disponible
+        # Remettre le stock disponible
         for ligne in demande.lignes.all():
-            ligne.materiel.etat = 'disponible'
+            ligne.materiel.quantite_disponible += ligne.quantite
+            if ligne.materiel.quantite_disponible > 0:
+                ligne.materiel.etat = 'disponible'
             ligne.materiel.save()
 
         from clubs.models import Notification
 
-        # Notification à l'étudiant
+        # Notification étudiant
         Notification.objects.create(
             destinataire=demande.utilisateur,
             message=f'✅ Restitution confirmée par l\'admin pour la demande '
@@ -160,11 +230,10 @@ def confirmer_restitution(request, pk):
             lien=f'/emprunts/{demande.id}/'
         )
 
-        # Notification à l'admin
+        # Notification admin
         Notification.objects.create(
             destinataire=request.user,
-            message=f'✅ Vous avez confirmé la restitution de la demande '
-                   f'#{demande.id}.',
+            message=f'✅ Vous avez confirmé la restitution de la demande #{demande.id}.',
             lien=f'/emprunts/{demande.id}/'
         )
 
@@ -175,6 +244,7 @@ def confirmer_restitution(request, pk):
         'demande': demande
     })
 
+
 @login_required
 def suivi_gps(request, pk):
     demande = get_object_or_404(Demande, pk=pk)
@@ -183,10 +253,9 @@ def suivi_gps(request, pk):
         'api_key': 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImUxODE1YzlkNzQ3MDRhZDlhMWVlNTc1ODBhNmE2NjMzIiwiaCI6Im11cm11cjY0In0='
     })
 
-import math
 
 def calculer_distance(lat1, lon1, lat2, lon2):
-    R = 6371  # rayon terre en km
+    R = 6371
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * \
@@ -204,14 +273,12 @@ def envoyer_position(request, pk):
         lat = data['latitude']
         lng = data['longitude']
 
-        # Enregistrer position
         PositionTempsReel.objects.create(
             demande=demande,
             latitude=lat,
             longitude=lng
         )
 
-        # Vérifier géofencing
         from clubs.models import Notification
         try:
             zone = demande.zone_autorisee
@@ -221,13 +288,11 @@ def envoyer_position(request, pk):
                 zone.longitude_centre
             )
             if distance > zone.rayon_km:
-                # Alerter l'admin
                 from django.contrib.auth import get_user_model
+                from django.utils import timezone
                 User = get_user_model()
                 admins = User.objects.filter(role='admin')
                 for admin in admins:
-                    # Vérifier pas déjà notifié récemment
-                    from django.utils import timezone
                     recente = Notification.objects.filter(
                         destinataire=admin,
                         message__contains=f'demande #{demande.id}',
@@ -236,7 +301,7 @@ def envoyer_position(request, pk):
                     if not recente:
                         Notification.objects.create(
                             destinataire=admin,
-                            message=f'ALERTE : Le matériel de la demande #{demande.id} '
+                            message=f'🚨 ALERTE : Le matériel de la demande #{demande.id} '
                                    f'est sorti de la zone autorisée ! '
                                    f'Distance : {distance:.1f} km',
                             lien=f'/emprunts/carte-admin/'
