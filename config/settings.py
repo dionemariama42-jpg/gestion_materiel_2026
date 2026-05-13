@@ -149,3 +149,7 @@ LOGIN_URL = 'connexion'
 
 # Scheduler
 SCHEDULER_AUTOSTART = True
+
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

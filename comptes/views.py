@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Utilisateur
+import os
 
 
 def accueil(request):
@@ -31,27 +32,57 @@ def deconnexion(request):
 
 def inscription(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        email = request.POST['email']
-        password = request.POST['password']
-        first_name = request.POST['first_name']
-        last_name = request.POST['last_name']
-        telephone = request.POST['telephone']
+        role = request.POST.get('role', 'etudiant')
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+
+        # Validations de base
+        if not username or not email or not password or not first_name or not last_name:
+            messages.error(request, 'Veuillez remplir tous les champs obligatoires.')
+            return render(request, 'comptes/inscription.html')
+
         if Utilisateur.objects.filter(username=username).exists():
             messages.error(request, 'Ce nom d\'utilisateur existe déjà.')
-        else:
-            user = Utilisateur.objects.create_user(
-                username=username,
-                email=email,
-                password=password,
-                first_name=first_name,
-                last_name=last_name,
-                telephone=telephone,
-                role='etudiant'
-            )
-            login(request, user)
-            messages.success(request, 'Compte créé avec succès !')
-            return redirect('tableau_de_bord')
+            return render(request, 'comptes/inscription.html')
+
+        if Utilisateur.objects.filter(email=email).exists():
+            messages.error(request, 'Cet email est déjà utilisé.')
+            return render(request, 'comptes/inscription.html')
+
+        # Créer l'utilisateur
+        user = Utilisateur(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+        )
+        user.set_password(password)
+
+        # Champs selon le rôle
+        if role == 'etudiant':
+            user.filiere = request.POST.get('filiere', '').strip()
+            user.niveau = request.POST.get('niveau', '')
+            # Photo carte étudiant
+            if 'carte_etudiant' in request.FILES:
+                user.carte_etudiant = request.FILES['carte_etudiant']
+
+        elif role == 'enseignant':
+            user.departement = request.POST.get('departement', '').strip()
+            user.fonction = request.POST.get('fonction', '')
+
+        # Photo de profil (optionnelle pour tous)
+        if 'photo_profil' in request.FILES:
+            user.photo_profil = request.FILES['photo_profil']
+
+        user.save()
+        login(request, user)
+        messages.success(request, f'Bienvenue {first_name} ! Votre compte a été créé avec succès.')
+        return redirect('tableau_de_bord')
+
     return render(request, 'comptes/inscription.html')
 
 
@@ -68,6 +99,7 @@ def tableau_de_bord(request):
     }
     return render(request, 'comptes/tableau_de_bord.html', contexte)
 
+
 @login_required
 def parametres(request):
     return render(request, 'comptes/parametres.html')
@@ -80,6 +112,25 @@ def modifier_profil(request):
         request.user.last_name = request.POST.get('last_name', '')
         request.user.email = request.POST.get('email', '')
         request.user.telephone = request.POST.get('telephone', '')
+
+        # Champs étudiant
+        if request.user.role == 'etudiant':
+            request.user.filiere = request.POST.get('filiere', '')
+            request.user.niveau = request.POST.get('niveau', '')
+
+        # Champs enseignant
+        if request.user.role == 'enseignant':
+            request.user.departement = request.POST.get('departement', '')
+            request.user.fonction = request.POST.get('fonction', '')
+
+        # Photo de profil
+        if 'photo_profil' in request.FILES:
+            # Supprimer l'ancienne photo si elle existe
+            if request.user.photo_profil:
+                if os.path.isfile(request.user.photo_profil.path):
+                    os.remove(request.user.photo_profil.path)
+            request.user.photo_profil = request.FILES['photo_profil']
+
         request.user.save()
         messages.success(request, 'Profil mis à jour avec succès !')
     return redirect('parametres')
@@ -95,6 +146,8 @@ def changer_mdp(request):
             messages.error(request, 'Mot de passe actuel incorrect.')
         elif nouveau_mdp != confirmer_mdp:
             messages.error(request, 'Les mots de passe ne correspondent pas.')
+        elif len(nouveau_mdp) < 6:
+            messages.error(request, 'Le mot de passe doit contenir au moins 6 caractères.')
         else:
             request.user.set_password(nouveau_mdp)
             request.user.save()

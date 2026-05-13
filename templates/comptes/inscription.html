@@ -1,52 +1,326 @@
 {% extends 'base.html' %}
-
 {% block titre %}Inscription — UFR SI{% endblock %}
+{% block page_titre %}Inscription{% endblock %}
 
 {% block contenu %}
-<div class="row justify-content-center mt-4">
-  <div class="col-md-6">
-    <div class="card p-4">
-      <h3 class="text-center mb-4" style="color:#1a5276;">
-        <i class="bi bi-person-plus"></i> Créer un compte
-      </h3>
-      <form method="post">
-        {% csrf_token %}
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Prénom</label>
-            <input type="text" name="first_name" class="form-control" required>
+<div class="row justify-content-center mt-2 mb-5">
+  <div class="col-md-8 col-lg-7">
+
+    <div class="card p-0 overflow-hidden">
+
+      <!-- En-tête -->
+      <div style="background: linear-gradient(135deg, var(--primary-dark), var(--primary-light)); padding: 32px; text-align:center; color:white;">
+        <div style="width:64px;height:64px;background:rgba(255,255,255,0.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;">
+          <i class="bi bi-person-plus"></i>
+        </div>
+        <h3 style="font-weight:800;margin:0;font-size:22px;">Créer un compte</h3>
+        <p style="opacity:0.8;margin:6px 0 0;font-size:14px;">UFR Sciences et Informatique</p>
+      </div>
+
+      <div class="card-body p-4">
+
+        <!-- Choix du rôle -->
+        <div class="mb-4">
+          <label class="form-label fw-bold mb-3">Je suis :</label>
+          <div class="row g-3">
+
+            <div class="col-6">
+              <div id="btn-etudiant" onclick="choisirRole('etudiant')"
+                   style="border:2px solid var(--primary); border-radius:14px; padding:20px; text-align:center; cursor:pointer; background:var(--surface-hover); transition:all 0.2s;">
+                <i class="bi bi-mortarboard" style="font-size:28px; color:var(--primary); display:block; margin-bottom:8px;"></i>
+                <strong style="font-size:14px; color:var(--primary);">Étudiant</strong>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div id="btn-enseignant" onclick="choisirRole('enseignant')"
+                   style="border:2px solid var(--border); border-radius:14px; padding:20px; text-align:center; cursor:pointer; background:white; transition:all 0.2s;">
+                <i class="bi bi-person-workspace" style="font-size:28px; color:var(--text-muted); display:block; margin-bottom:8px;"></i>
+                <strong style="font-size:14px; color:var(--text-muted);">Enseignant</strong>
+              </div>
+            </div>
+
           </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Nom</label>
-            <input type="text" name="last_name" class="form-control" required>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="formInscription">
+          {% csrf_token %}
+          <input type="hidden" name="role" id="roleInput" value="etudiant">
+
+          <!-- Informations communes -->
+          <div style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-person me-1"></i> Informations personnelles
+            </p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Prénom <span style="color:var(--danger);">*</span></label>
+                <input type="text" name="first_name" class="form-control" placeholder="Ex: Aminata" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nom <span style="color:var(--danger);">*</span></label>
+                <input type="text" name="last_name" class="form-control" placeholder="Ex: Diallo" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Nom d'utilisateur <span style="color:var(--danger);">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-at"></i></span>
+                  <input type="text" name="username" class="form-control" placeholder="Ex: aminata_diallo" required>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Email universitaire <span style="color:var(--danger);">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" name="email" class="form-control" placeholder="prenom.nom@ufrsi.edu" required>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Mot de passe <span style="color:var(--danger);">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  <input type="password" name="password" id="password" class="form-control" placeholder="Minimum 6 caractères" required>
+                  <button class="input-group-text" type="button" onclick="togglePassword()" style="cursor:pointer; background:var(--surface); border:1px solid var(--border);">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Nom d'utilisateur</label>
-          <input type="text" name="username" class="form-control" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Email universitaire</label>
-          <input type="email" name="email" class="form-control" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Téléphone</label>
-          <input type="text" name="telephone" class="form-control">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Mot de passe</label>
-          <input type="password" name="password" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">
-          <i class="bi bi-person-check"></i> Créer mon compte
-        </button>
-      </form>
-      <hr>
-      <p class="text-center">
-        Déjà un compte ?
-        <a href="{% url 'connexion' %}">Se connecter</a>
-      </p>
+
+          <!-- Champs ÉTUDIANT -->
+          <div id="champsEtudiant" style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-mortarboard me-1"></i> Informations académiques
+            </p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Niveau <span style="color:var(--danger);">*</span></label>
+                <select name="niveau" class="form-select" id="niveauSelect">
+                  <option value="">-- Choisir --</option>
+                  <option value="L1">Licence 1</option>
+                  <option value="L2">Licence 2</option>
+                  <option value="L3">Licence 3</option>
+                  <option value="M1">Master 1</option>
+                  <option value="M2">Master 2</option>
+                  <option value="D">Doctorat</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Filière <span style="color:var(--danger);">*</span></label>
+                <input type="text" name="filiere" class="form-control" placeholder="Ex: Informatique" id="filiereInput">
+              </div>
+
+              <!-- Upload carte étudiant -->
+              <div class="col-12">
+                <label class="form-label">Photo de la carte étudiante <span style="color:var(--danger);">*</span></label>
+                <div id="carteDropzone" onclick="document.getElementById('carteInput').click()"
+                     style="border:2px dashed var(--border); border-radius:12px; padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; background:white;">
+                  <i class="bi bi-credit-card" style="font-size:32px; color:var(--text-muted); display:block; margin-bottom:8px;"></i>
+                  <p style="margin:0; font-size:13px; color:var(--text-muted);">Cliquez pour uploader votre carte étudiante</p>
+                  <p style="margin:4px 0 0; font-size:11px; color:var(--text-muted);">JPG, PNG — Max 5 Mo</p>
+                </div>
+                <input type="file" name="carte_etudiant" id="carteInput" accept="image/*" style="display:none;" onchange="previewCarte(this)">
+                <div id="cartePreview" style="display:none; margin-top:12px; position:relative;">
+                  <img id="carteImg" style="width:100%; border-radius:10px; max-height:180px; object-fit:cover; border:1px solid var(--border);">
+                  <button type="button" onclick="supprimerCarte()"
+                          style="position:absolute;top:8px;right:8px;background:var(--danger);color:white;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;">×</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Champs ENSEIGNANT -->
+          <div id="champsEnseignant" style="display:none; background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-building me-1"></i> Informations professionnelles
+            </p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Département <span style="color:var(--danger);">*</span></label>
+                <input type="text" name="departement" class="form-control" placeholder="Ex: Informatique" id="departementInput">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Fonction <span style="color:var(--danger);">*</span></label>
+                <select name="fonction" class="form-select" id="fonctionSelect">
+                  <option value="">-- Choisir --</option>
+                  <option value="professeur">Professeur</option>
+                  <option value="maitre_assistant">Maître Assistant</option>
+                  <option value="maitre_conference">Maître de Conférences</option>
+                  <option value="vacataire">Vacataire</option>
+                  <option value="chef_departement">Chef de Département</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Photo de profil (optionnelle) -->
+          <div style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:24px; border:1px solid var(--border);">
+            <p style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-camera me-1"></i> Photo de profil <span style="color:var(--text-muted); font-weight:400; text-transform:none; letter-spacing:0;">(optionnel)</span>
+            </p>
+
+            <div class="d-flex align-items-center gap-4">
+              <div id="photoProfilPreview"
+                   style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));display:flex;align-items:center;justify-content:center;font-size:28px;color:white;flex-shrink:0;overflow:hidden;border:3px solid var(--border);">
+                <i class="bi bi-person" id="photoProfilIcon"></i>
+                <img id="photoProfilImg" style="display:none;width:100%;height:100%;object-fit:cover;">
+              </div>
+              <div>
+                <button type="button" onclick="document.getElementById('photoProfilInput').click()"
+                        class="btn btn-outline-primary btn-sm mb-2">
+                  <i class="bi bi-upload me-1"></i> Choisir une photo
+                </button>
+                <p style="font-size:12px; color:var(--text-muted); margin:0;">JPG, PNG — Max 2 Mo</p>
+              </div>
+            </div>
+            <input type="file" name="photo_profil" id="photoProfilInput" accept="image/*" style="display:none;" onchange="previewPhotoProfil(this)">
+          </div>
+
+          <!-- Bouton submit -->
+          <button type="submit" class="btn btn-primary w-100" style="padding:14px; font-size:15px; font-weight:700;">
+            <i class="bi bi-person-check me-2"></i>Créer mon compte
+          </button>
+
+        </form>
+
+        <hr style="margin:24px 0;">
+        <p class="text-center" style="font-size:14px; color:var(--text-muted);">
+          Déjà un compte ?
+          <a href="{% url 'connexion' %}" style="color:var(--primary); font-weight:600;">Se connecter</a>
+        </p>
+
+      </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ---- Choix du rôle ----
+  function choisirRole(role) {
+    document.getElementById('roleInput').value = role;
+
+    var btnEtudiant = document.getElementById('btn-etudiant');
+    var btnEnseignant = document.getElementById('btn-enseignant');
+    var champsEtudiant = document.getElementById('champsEtudiant');
+    var champsEnseignant = document.getElementById('champsEnseignant');
+
+    if (role === 'etudiant') {
+      // Activer étudiant
+      btnEtudiant.style.borderColor = 'var(--primary)';
+      btnEtudiant.style.background = 'var(--surface-hover)';
+      btnEtudiant.querySelector('i').style.color = 'var(--primary)';
+      btnEtudiant.querySelector('strong').style.color = 'var(--primary)';
+
+      // Désactiver enseignant
+      btnEnseignant.style.borderColor = 'var(--border)';
+      btnEnseignant.style.background = 'white';
+      btnEnseignant.querySelector('i').style.color = 'var(--text-muted)';
+      btnEnseignant.querySelector('strong').style.color = 'var(--text-muted)';
+
+      champsEtudiant.style.display = 'block';
+      champsEnseignant.style.display = 'none';
+
+      // Required
+      document.getElementById('niveauSelect').required = true;
+      document.getElementById('filiereInput').required = true;
+      document.getElementById('departementInput').required = false;
+      document.getElementById('fonctionSelect').required = false;
+
+    } else {
+      // Activer enseignant
+      btnEnseignant.style.borderColor = 'var(--primary)';
+      btnEnseignant.style.background = 'var(--surface-hover)';
+      btnEnseignant.querySelector('i').style.color = 'var(--primary)';
+      btnEnseignant.querySelector('strong').style.color = 'var(--primary)';
+
+      // Désactiver étudiant
+      btnEtudiant.style.borderColor = 'var(--border)';
+      btnEtudiant.style.background = 'white';
+      btnEtudiant.querySelector('i').style.color = 'var(--text-muted)';
+      btnEtudiant.querySelector('strong').style.color = 'var(--text-muted)';
+
+      champsEtudiant.style.display = 'none';
+      champsEnseignant.style.display = 'block';
+
+      // Required
+      document.getElementById('niveauSelect').required = false;
+      document.getElementById('filiereInput').required = false;
+      document.getElementById('departementInput').required = true;
+      document.getElementById('fonctionSelect').required = true;
+    }
+  }
+
+  // ---- Preview carte étudiant ----
+  function previewCarte(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('carteImg').src = e.target.result;
+        document.getElementById('cartePreview').style.display = 'block';
+        document.getElementById('carteDropzone').style.display = 'none';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function supprimerCarte() {
+    document.getElementById('carteInput').value = '';
+    document.getElementById('cartePreview').style.display = 'none';
+    document.getElementById('carteDropzone').style.display = 'block';
+  }
+
+  // ---- Preview photo de profil ----
+  function previewPhotoProfil(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('photoProfilIcon').style.display = 'none';
+        document.getElementById('photoProfilImg').src = e.target.result;
+        document.getElementById('photoProfilImg').style.display = 'block';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // ---- Toggle mot de passe ----
+  function togglePassword() {
+    var input = document.getElementById('password');
+    var icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.className = 'bi bi-eye-slash';
+    } else {
+      input.type = 'password';
+      icon.className = 'bi bi-eye';
+    }
+  }
+
+  // Drag & drop carte
+  var dropzone = document.getElementById('carteDropzone');
+  dropzone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--primary)';
+    this.style.background = 'var(--surface-hover)';
+  });
+  dropzone.addEventListener('dragleave', function() {
+    this.style.borderColor = 'var(--border)';
+    this.style.background = 'white';
+  });
+  dropzone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.borderColor = 'var(--border)';
+    this.style.background = 'white';
+    var files = e.dataTransfer.files;
+    if (files.length > 0) {
+      document.getElementById('carteInput').files = files;
+      previewCarte(document.getElementById('carteInput'));
+    }
+  });
+</script>
 {% endblock %}
