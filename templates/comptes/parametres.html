@@ -48,11 +48,9 @@
       </div>
       <div class="card-body">
 
-        <!-- Thème -->
         <div class="mb-4">
           <label class="form-label fw-bold mb-3">Thème</label>
           <div class="row g-3">
-
             <div class="col-md-4">
               <div id="theme-clair" onclick="setTheme('clair')"
                    style="border:2px solid var(--primary); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:all 0.2s;">
@@ -66,7 +64,6 @@
                 <strong style="font-size:13px; color:var(--text);">☀️ Clair</strong>
               </div>
             </div>
-
             <div class="col-md-4">
               <div id="theme-sombre" onclick="setTheme('sombre')"
                    style="border:2px solid var(--border); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:all 0.2s;">
@@ -80,7 +77,6 @@
                 <strong style="font-size:13px; color:var(--text);">🌙 Sombre</strong>
               </div>
             </div>
-
             <div class="col-md-4">
               <div id="theme-auto" onclick="setTheme('auto')"
                    style="border:2px solid var(--border); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:all 0.2s;">
@@ -88,52 +84,32 @@
                 <strong style="font-size:13px; color:var(--text);">⚙️ Automatique</strong>
               </div>
             </div>
-
           </div>
         </div>
 
-        <!-- Couleur principale -->
         <div>
           <label class="form-label fw-bold mb-3">Couleur principale</label>
           <div class="d-flex gap-3 flex-wrap align-items-center">
-
-            <div class="couleur-option" data-couleur="#1d4ed8"
-                 onclick="setCouleur('#1d4ed8')" title="Bleu (défaut)"
+            <div class="couleur-option" data-couleur="#1d4ed8" onclick="setCouleur('#1d4ed8')" title="Bleu"
                  style="width:40px;height:40px;border-radius:50%;background:#1d4ed8;cursor:pointer;transition:all 0.2s;"></div>
-
-            <div class="couleur-option" data-couleur="#16a34a"
-                 onclick="setCouleur('#16a34a')" title="Vert"
+            <div class="couleur-option" data-couleur="#16a34a" onclick="setCouleur('#16a34a')" title="Vert"
                  style="width:40px;height:40px;border-radius:50%;background:#16a34a;cursor:pointer;transition:all 0.2s;"></div>
-
-            <div class="couleur-option" data-couleur="#7c3aed"
-                 onclick="setCouleur('#7c3aed')" title="Violet"
+            <div class="couleur-option" data-couleur="#7c3aed" onclick="setCouleur('#7c3aed')" title="Violet"
                  style="width:40px;height:40px;border-radius:50%;background:#7c3aed;cursor:pointer;transition:all 0.2s;"></div>
-
-            <div class="couleur-option" data-couleur="#dc2626"
-                 onclick="setCouleur('#dc2626')" title="Rouge"
+            <div class="couleur-option" data-couleur="#dc2626" onclick="setCouleur('#dc2626')" title="Rouge"
                  style="width:40px;height:40px;border-radius:50%;background:#dc2626;cursor:pointer;transition:all 0.2s;"></div>
-
-            <div class="couleur-option" data-couleur="#d97706"
-                 onclick="setCouleur('#d97706')" title="Orange"
+            <div class="couleur-option" data-couleur="#d97706" onclick="setCouleur('#d97706')" title="Orange"
                  style="width:40px;height:40px;border-radius:50%;background:#d97706;cursor:pointer;transition:all 0.2s;"></div>
-
-            <div class="couleur-option" data-couleur="#0891b2"
-                 onclick="setCouleur('#0891b2')" title="Cyan"
+            <div class="couleur-option" data-couleur="#0891b2" onclick="setCouleur('#0891b2')" title="Cyan"
                  style="width:40px;height:40px;border-radius:50%;background:#0891b2;cursor:pointer;transition:all 0.2s;"></div>
-
-            <!-- Couleur personnalisée -->
             <label title="Couleur personnalisée" style="cursor:pointer;">
-              <input type="color" id="couleurCustom" style="opacity:0;width:0;height:0;position:absolute;"
-                     onchange="setCouleur(this.value)">
-              <div style="width:40px;height:40px;border-radius:50%;border:2px dashed var(--border);
-                   display:flex;align-items:center;justify-content:center;cursor:pointer;
-                   color:var(--text-muted);font-size:18px;"
+              <input type="color" id="couleurCustom" style="opacity:0;width:0;height:0;position:absolute;" onchange="setCouleur(this.value)">
+              <div style="width:40px;height:40px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;"
                    onclick="document.getElementById('couleurCustom').click()">+</div>
             </label>
           </div>
           <p class="text-muted mt-2" style="font-size:12px;">
-            <i class="bi bi-info-circle me-1"></i>
-            Les changements s'appliquent immédiatement sur toutes les pages.
+            <i class="bi bi-info-circle me-1"></i>Les changements s'appliquent sur toutes les pages.
           </p>
         </div>
 
@@ -146,8 +122,52 @@
         <i class="bi bi-person me-2"></i>Mon profil
       </div>
       <div class="card-body">
-        <form method="post" action="{% url 'modifier_profil' %}">
+
+        <!-- ✅ enctype obligatoire pour les fichiers -->
+        <form method="post" action="{% url 'modifier_profil' %}" enctype="multipart/form-data">
           {% csrf_token %}
+
+          <!-- Photo de profil -->
+          <div class="mb-4 p-3" style="background:var(--surface); border-radius:14px; border:1px solid var(--border);">
+            <label class="form-label fw-bold mb-3">
+              <i class="bi bi-camera me-1"></i> Photo de profil
+            </label>
+            <div class="d-flex align-items-center gap-4">
+
+              <!-- Aperçu photo actuelle ou initiales -->
+              <div style="width:90px; height:90px; border-radius:50%; overflow:hidden; border:3px solid var(--border); flex-shrink:0; background:linear-gradient(135deg, var(--primary-dark), var(--primary-light)); display:flex; align-items:center; justify-content:center;">
+                {% if user.photo_profil %}
+                  <img id="photoPreview" src="{{ user.photo_profil.url }}"
+                       style="width:100%; height:100%; object-fit:cover;">
+                {% else %}
+                  <img id="photoPreview" style="display:none; width:100%; height:100%; object-fit:cover;">
+                  <span id="photoInitiales" style="color:white; font-weight:700; font-size:24px;">
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                  </span>
+                {% endif %}
+              </div>
+
+              <div>
+                <button type="button" onclick="document.getElementById('photoInput').click()"
+                        class="btn btn-outline-primary btn-sm mb-2">
+                  <i class="bi bi-upload me-1"></i>
+                  {% if user.photo_profil %}Changer la photo{% else %}Ajouter une photo{% endif %}
+                </button>
+                {% if user.photo_profil %}
+                <button type="button" onclick="supprimerPhoto()"
+                        class="btn btn-sm ms-2" style="border:1px solid var(--danger); color:var(--danger); background:transparent;">
+                  <i class="bi bi-trash me-1"></i>Supprimer
+                </button>
+                {% endif %}
+                <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0;">JPG, PNG — Max 2 Mo</p>
+              </div>
+            </div>
+            <input type="file" name="photo_profil" id="photoInput" accept="image/*"
+                   style="display:none;" onchange="previewPhoto(this)">
+            <input type="hidden" name="supprimer_photo" id="supprimerPhotoInput" value="0">
+          </div>
+
+          <!-- Informations personnelles -->
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label">Prénom</label>
@@ -159,15 +179,59 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label">Email</label>
+            <label class="form-label">Email universitaire</label>
             <input type="email" name="email" class="form-control" value="{{ user.email }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Téléphone</label>
             <input type="text" name="telephone" class="form-control" value="{{ user.telephone }}">
           </div>
+
+          <!-- Champs spécifiques étudiant -->
+          {% if user.role == 'etudiant' %}
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Niveau</label>
+              <select name="niveau" class="form-select">
+                <option value="">-- Choisir --</option>
+                <option value="L1" {% if user.niveau == 'L1' %}selected{% endif %}>Licence 1</option>
+                <option value="L2" {% if user.niveau == 'L2' %}selected{% endif %}>Licence 2</option>
+                <option value="L3" {% if user.niveau == 'L3' %}selected{% endif %}>Licence 3</option>
+                <option value="M1" {% if user.niveau == 'M1' %}selected{% endif %}>Master 1</option>
+                <option value="M2" {% if user.niveau == 'M2' %}selected{% endif %}>Master 2</option>
+                <option value="D" {% if user.niveau == 'D' %}selected{% endif %}>Doctorat</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Filière</label>
+              <input type="text" name="filiere" class="form-control" value="{{ user.filiere }}">
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Champs spécifiques enseignant -->
+          {% if user.role == 'enseignant' %}
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Département</label>
+              <input type="text" name="departement" class="form-control" value="{{ user.departement }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fonction</label>
+              <select name="fonction" class="form-select">
+                <option value="">-- Choisir --</option>
+                <option value="professeur" {% if user.fonction == 'professeur' %}selected{% endif %}>Professeur</option>
+                <option value="maitre_assistant" {% if user.fonction == 'maitre_assistant' %}selected{% endif %}>Maître Assistant</option>
+                <option value="maitre_conference" {% if user.fonction == 'maitre_conference' %}selected{% endif %}>Maître de Conférences</option>
+                <option value="vacataire" {% if user.fonction == 'vacataire' %}selected{% endif %}>Vacataire</option>
+                <option value="chef_departement" {% if user.fonction == 'chef_departement' %}selected{% endif %}>Chef de Département</option>
+              </select>
+            </div>
+          </div>
+          {% endif %}
+
           <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check me-2"></i>Enregistrer
+            <i class="bi bi-check me-2"></i>Enregistrer les modifications
           </button>
         </form>
       </div>
@@ -206,7 +270,6 @@
         <i class="bi bi-bell me-2"></i>Notifications
       </div>
       <div class="card-body">
-
         <div class="d-flex justify-content-between align-items-center mb-3 p-3"
              style="background:var(--surface); border-radius:12px; border:1px solid var(--border);">
           <div>
@@ -217,7 +280,6 @@
             <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-
         <div class="d-flex justify-content-between align-items-center mb-3 p-3"
              style="background:var(--surface); border-radius:12px; border:1px solid var(--border);">
           <div>
@@ -228,7 +290,6 @@
             <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-
         <div class="d-flex justify-content-between align-items-center p-3"
              style="background:var(--surface); border-radius:12px; border:1px solid var(--border);">
           <div>
@@ -239,7 +300,6 @@
             <input class="form-check-input" type="checkbox" checked>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -294,30 +354,52 @@
 
   </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // Marquer le thème et la couleur actifs au chargement de la page
+  // ---- Thème et couleur actifs ----
   (function() {
     var theme = localStorage.getItem('theme') || 'clair';
     var couleur = localStorage.getItem('couleur');
-
-    // Thème actif
     document.querySelectorAll('[id^="theme-"]').forEach(function(el) {
       el.style.borderColor = 'var(--border)';
     });
     var themeBtn = document.getElementById('theme-' + theme);
     if (themeBtn) themeBtn.style.borderColor = 'var(--primary)';
-
-    // Couleur active
     if (couleur) {
       var cercle = document.querySelector('[data-couleur="' + couleur + '"]');
-      if (cercle) cercle.style.outline = '3px solid ' + couleur;
-      cercle.style.outlineOffset = '3px';
+      if (cercle) {
+        cercle.style.outline = '3px solid ' + couleur;
+        cercle.style.outlineOffset = '3px';
+      }
     }
   })();
+
+  // ---- Preview photo de profil ----
+  function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var preview = document.getElementById('photoPreview');
+        var initiales = document.getElementById('photoInitiales');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        if (initiales) initiales.style.display = 'none';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // ---- Supprimer photo ----
+  function supprimerPhoto() {
+    document.getElementById('supprimerPhotoInput').value = '1';
+    document.getElementById('photoInput').value = '';
+    var preview = document.getElementById('photoPreview');
+    var initiales = document.getElementById('photoInitiales');
+    preview.style.display = 'none';
+    if (initiales) initiales.style.display = 'block';
+  }
 
   function setLangue(langue) {
     localStorage.setItem('langue', langue);

@@ -39,7 +39,6 @@ def inscription(request):
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
 
-        # Validations de base
         if not username or not email or not password or not first_name or not last_name:
             messages.error(request, 'Veuillez remplir tous les champs obligatoires.')
             return render(request, 'comptes/inscription.html')
@@ -52,7 +51,6 @@ def inscription(request):
             messages.error(request, 'Cet email est déjà utilisé.')
             return render(request, 'comptes/inscription.html')
 
-        # Créer l'utilisateur
         user = Utilisateur(
             username=username,
             email=email,
@@ -62,11 +60,9 @@ def inscription(request):
         )
         user.set_password(password)
 
-        # Champs selon le rôle
         if role == 'etudiant':
             user.filiere = request.POST.get('filiere', '').strip()
             user.niveau = request.POST.get('niveau', '')
-            # Photo carte étudiant
             if 'carte_etudiant' in request.FILES:
                 user.carte_etudiant = request.FILES['carte_etudiant']
 
@@ -74,7 +70,6 @@ def inscription(request):
             user.departement = request.POST.get('departement', '').strip()
             user.fonction = request.POST.get('fonction', '')
 
-        # Photo de profil (optionnelle pour tous)
         if 'photo_profil' in request.FILES:
             user.photo_profil = request.FILES['photo_profil']
 
@@ -123,9 +118,16 @@ def modifier_profil(request):
             request.user.departement = request.POST.get('departement', '')
             request.user.fonction = request.POST.get('fonction', '')
 
-        # Photo de profil
-        if 'photo_profil' in request.FILES:
-            # Supprimer l'ancienne photo si elle existe
+        # Supprimer la photo si demandé
+        supprimer_photo = request.POST.get('supprimer_photo', '0')
+        if supprimer_photo == '1' and request.user.photo_profil:
+            if os.path.isfile(request.user.photo_profil.path):
+                os.remove(request.user.photo_profil.path)
+            request.user.photo_profil = None
+
+        # Nouvelle photo de profil
+        elif 'photo_profil' in request.FILES:
+            # Supprimer l'ancienne si elle existe
             if request.user.photo_profil:
                 if os.path.isfile(request.user.photo_profil.path):
                     os.remove(request.user.photo_profil.path)
