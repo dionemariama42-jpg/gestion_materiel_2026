@@ -11,6 +11,7 @@ urlpatterns = [
     path('cahier/', include('cahier.urls')),
     path('clubs/', include('clubs.urls')),
     path('dashboard/', include('dashboard.urls')),
+    path('chatbot/', include('chatbot.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

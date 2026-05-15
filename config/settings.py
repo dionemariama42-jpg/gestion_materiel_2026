@@ -10,8 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+os.environ.setdefault('GROQ_API_KEY', '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')
 
+# Chemin absolu vers le .env
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -48,6 +55,7 @@ INSTALLED_APPS = [
     'cahier',
     'clubs',
     'dashboard',
+    'chatbot',
     
 ]
 

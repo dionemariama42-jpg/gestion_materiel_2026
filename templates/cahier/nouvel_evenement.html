@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block titre %}Nouvel événement — UFR SI{% endblock %}
+{% block page_titre %}Nouvel événement{% endblock %}
+
+{% block contenu %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="bi bi-calendar-plus me-2"></i>Créer un événement</span>
+        <a href="{% url 'calendrier' %}" class="btn btn-sm btn-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+      </div>
+      <div class="card-body">
+
+        <form method="post">
+          {% csrf_token %}
+
+          <!-- Informations principales -->
+          <div style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-info-circle me-1"></i> Informations générales
+            </p>
+
+            <div class="mb-3">
+              <label class="form-label">Titre de l'événement <span style="color:var(--danger);">*</span></label>
+              <input type="text" name="titre" class="form-control"
+                     placeholder="Ex: Conférence du Club Géomatique" required>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Type <span style="color:var(--danger);">*</span></label>
+                <select name="type" class="form-select" required>
+                  <option value="cours">📚 Cours</option>
+                  <option value="conference">🎤 Conférence</option>
+                  <option value="club">👥 Activité club</option>
+                  <option value="sortie">🗺️ Sortie terrain</option>
+                  <option value="examen">✏️ Examen</option>
+                  <option value="autre">📌 Autre</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Cours associé (optionnel)</label>
+                <select name="cours" class="form-select">
+                  <option value="">-- Aucun --</option>
+                  {% for cour in cours_list %}
+                  <option value="{{ cour.id }}">{{ cour.nom }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea name="description" class="form-control" rows="3"
+                        placeholder="Décrivez l'événement..."></textarea>
+            </div>
+
+            <div class="mb-0">
+              <label class="form-label">Lieu</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" name="lieu" class="form-control"
+                       placeholder="Ex: Amphithéâtre A, Salle 201...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dates et heures -->
+          <div style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+              <i class="bi bi-clock me-1"></i> Dates et heures
+            </p>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Date de début <span style="color:var(--danger);">*</span></label>
+                <input type="date" name="date_debut" id="date_debut" class="form-control"
+                       value="{{ date_selectionnee }}" required
+                       onchange="majDateFin()">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Date de fin</label>
+                <input type="date" name="date_fin" id="date_fin" class="form-control"
+                       value="{{ date_selectionnee }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Heure de début</label>
+                <input type="time" name="heure_debut" class="form-control">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Heure de fin</label>
+                <input type="time" name="heure_fin" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- Matériels -->
+          <div style="background:var(--surface); border-radius:12px; padding:20px; margin-bottom:20px; border:1px solid var(--border);">
+            <p style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
+              <i class="bi bi-box-seam me-1"></i> Matériels nécessaires
+            </p>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+              Sélectionnez les matériels dont vous avez besoin. Une demande d'emprunt sera créée automatiquement.
+            </p>
+
+            {% if materiels %}
+            <div class="row g-2">
+              {% for mat in materiels %}
+              <div class="col-md-6">
+                <div class="materiel-item" style="border:1.5px solid var(--border); border-radius:10px;
+                     padding:12px; cursor:pointer; transition:all 0.2s; background:white;"
+                     onclick="toggleMateriel(this, '{{ mat.id }}')">
+                  <div class="d-flex align-items-center gap-3">
+                    <input type="checkbox" name="materiels" value="{{ mat.id }}"
+                           id="mat_{{ mat.id }}" style="display:none;">
+                    <div style="width:36px; height:36px; border-radius:8px;
+                                background:var(--surface-hover); display:flex;
+                                align-items:center; justify-content:center; flex-shrink:0;">
+                      <i class="bi bi-box" style="color:var(--primary); font-size:18px;"></i>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                      <div style="font-size:13px; font-weight:600; color:var(--text);">
+                        {{ mat.nom }}
+                      </div>
+                      <div style="font-size:11px; color:var(--text-muted);">
+                        Stock : {{ mat.quantite_disponible|default:mat.quantite }}
+                      </div>
+                    </div>
+                    <div class="check-icon" style="width:20px; height:20px; border-radius:50%;
+                         border:2px solid var(--border); display:flex; align-items:center;
+                         justify-content:center; flex-shrink:0; transition:all 0.2s;">
+                    </div>
+                  </div>
+                  <!-- Quantité (cachée au départ) -->
+                  <div class="quantite-row" style="display:none; margin-top:10px;">
+                    <label style="font-size:12px; color:var(--text-muted); margin-bottom:4px; display:block;">
+                      Quantité :
+                    </label>
+                    <input type="number" name="quantite_{{ mat.id }}"
+                           value="1" min="1" max="{{ mat.quantite_disponible|default:mat.quantite }}"
+                           class="form-control form-control-sm" style="width:80px;"
+                           onclick="event.stopPropagation()">
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align:center; padding:20px; color:var(--text-muted);">
+              <i class="bi bi-box-seam" style="font-size:28px; display:block; margin-bottom:8px;"></i>
+              <p style="font-size:13px; margin:0;">Aucun matériel disponible actuellement</p>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Boutons -->
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-primary flex-fill" style="padding:12px;">
+              <i class="bi bi-check-circle me-2"></i>Créer l'événement
+            </button>
+            <a href="{% url 'calendrier' %}" class="btn btn-secondary" style="padding:12px 20px;">
+              Annuler
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Date fin = date début par défaut
+  function majDateFin() {
+    var debut = document.getElementById('date_debut').value;
+    var fin = document.getElementById('date_fin');
+    if (!fin.value || fin.value < debut) {
+      fin.value = debut;
+    }
+  }
+
+  // Toggle sélection matériel
+  function toggleMateriel(el, matId) {
+    var checkbox = document.getElementById('mat_' + matId);
+    var checkIcon = el.querySelector('.check-icon');
+    var quantiteRow = el.querySelector('.quantite-row');
+
+    checkbox.checked = !checkbox.checked;
+
+    if (checkbox.checked) {
+      el.style.borderColor = 'var(--primary)';
+      el.style.background = 'var(--surface-hover)';
+      checkIcon.style.background = 'var(--primary)';
+      checkIcon.style.borderColor = 'var(--primary)';
+      checkIcon.innerHTML = '<i class="bi bi-check" style="color:white;font-size:12px;"></i>';
+      quantiteRow.style.display = 'block';
+    } else {
+      el.style.borderColor = 'var(--border)';
+      el.style.background = 'white';
+      checkIcon.style.background = 'transparent';
+      checkIcon.style.borderColor = 'var(--border)';
+      checkIcon.innerHTML = '';
+      quantiteRow.style.display = 'none';
+    }
+  }
+</script>
+{% endblock %}

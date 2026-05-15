@@ -66,9 +66,9 @@
 
     <div class="nav-section">Pédagogie</div>
 
-    <a href="{% url 'liste_cours' %}" class="sidebar-link" data-label="Cahier de textes">
-      <i class="bi bi-journal-bookmark"></i>
-      <span class="nav-label">Cahier de textes</span>
+    <a href="{% url 'calendrier' %}" class="sidebar-link" data-label="Calendrier">
+      <i class="bi bi-calendar3"></i>
+      <span class="nav-label">Calendrier</span>
     </a>
 
     <div class="nav-section">Clubs</div>
@@ -304,5 +304,7 @@
 </script>
 
 {% block scripts %}{% endblock %}
+{% include 'chatbot/widget.html' %}
+
 </body>
 </html>

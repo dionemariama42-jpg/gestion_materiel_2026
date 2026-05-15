@@ -98,3 +98,78 @@ class FichierSeance(models.Model):
 
     def __str__(self):
         return self.nom_fichier
+
+
+# ============================================================
+# NOUVEAU : Événement calendrier lié aux emprunts
+# ============================================================
+
+class Evenement(models.Model):
+    TYPES = [
+        ('cours', 'Cours'),
+        ('conference', 'Conférence'),
+        ('club', 'Activité club'),
+        ('sortie', 'Sortie terrain'),
+        ('examen', 'Examen'),
+        ('autre', 'Autre'),
+    ]
+
+    STATUTS = [
+        ('planifie', 'Planifié'),
+        ('confirme', 'Confirmé'),
+        ('annule', 'Annulé'),
+        ('termine', 'Terminé'),
+    ]
+
+    titre = models.CharField(max_length=200)
+    type = models.CharField(max_length=20, choices=TYPES, default='autre')
+    statut = models.CharField(max_length=20, choices=STATUTS, default='planifie')
+    description = models.TextField(blank=True)
+
+    date_debut = models.DateField()
+    date_fin = models.DateField()
+    heure_debut = models.TimeField(null=True, blank=True)
+    heure_fin = models.TimeField(null=True, blank=True)
+    lieu = models.CharField(max_length=200, blank=True)
+
+    # Qui organise
+    organisateur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name='evenements_organises'
+    )
+
+    # Demande de matériel associée (optionnelle)
+    demande = models.ForeignKey(
+        'emprunts.Demande',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='evenements'
+    )
+
+    # Cours associé (optionnel)
+    cours = models.ForeignKey(
+        Cours,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='evenements'
+    )
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date_debut', 'heure_debut']
+
+    def __str__(self):
+        return f"{self.titre} — {self.date_debut}"
+
+    def couleur(self):
+        couleurs = {
+            'cours': '#1d4ed8',
+            'conference': '#7c3aed',
+            'club': '#16a34a',
+            'sortie': '#d97706',
+            'examen': '#dc2626',
+            'autre': '#64748b',
+        }
+        return couleurs.get(self.type, '#64748b')
