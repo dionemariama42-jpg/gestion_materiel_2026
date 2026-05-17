@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-os.environ.setdefault('GROQ_API_KEY', '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')
+os.environ.setdefault('GROQ_API_KEY', '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')
 
 # Chemin absolu vers le .env
 BASE_DIR = Path(__file__).resolve().parent.parent

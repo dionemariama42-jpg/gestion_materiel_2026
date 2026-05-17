@@ -5,7 +5,7 @@
 {% block contenu %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <p class="text-muted mb-0">{{ materiels.count }} matériel(s) trouvé(s)</p>
-  {% if user.is_authenticated and user.role == 'admin' %}
+  {% if user.is_authenticated and user.role in 'admin,admin_terrain,admin_bureau' %}
   <a href="/admin/materiel/materiel/add/" class="btn btn-primary">
     <i class="bi bi-plus"></i> Ajouter matériel
   </a>
@@ -15,7 +15,7 @@
 <div class="card mb-4">
   <div class="card-body">
     <form method="get" class="row g-3 align-items-end">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label">Catégorie</label>
         <select name="categorie" class="form-select">
           <option value="">Toutes les catégories</option>
@@ -27,22 +27,26 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label">État</label>
         <select name="etat" class="form-select">
           <option value="">Tous les états</option>
-          <option value="disponible" {% if etat_filtre == 'disponible' %}selected{% endif %}>
-            Disponible
-          </option>
-          <option value="emprunte" {% if etat_filtre == 'emprunte' %}selected{% endif %}>
-            Emprunté
-          </option>
-          <option value="maintenance" {% if etat_filtre == 'maintenance' %}selected{% endif %}>
-            Maintenance
-          </option>
+          <option value="disponible" {% if etat_filtre == 'disponible' %}selected{% endif %}>Disponible</option>
+          <option value="emprunte" {% if etat_filtre == 'emprunte' %}selected{% endif %}>Emprunté</option>
+          <option value="maintenance" {% if etat_filtre == 'maintenance' %}selected{% endif %}>Maintenance</option>
         </select>
       </div>
-      <div class="col-md-4">
+      {% if user.role == 'admin' %}
+      <div class="col-md-3">
+        <label class="form-label">Domaine</label>
+        <select name="domaine" class="form-select">
+          <option value="">Tous les domaines</option>
+          <option value="terrain" {% if domaine_filtre == 'terrain' %}selected{% endif %}>🏗️ Terrain</option>
+          <option value="bureau" {% if domaine_filtre == 'bureau' %}selected{% endif %}>🏢 Bureau</option>
+        </select>
+      </div>
+      {% endif %}
+      <div class="col-md-3">
         <button type="submit" class="btn btn-primary w-100">
           <i class="bi bi-funnel"></i> Filtrer
         </button>
@@ -63,7 +67,11 @@
       {% else %}
       <div class="d-flex align-items-center justify-content-center"
            style="height:200px; background:#f0f4f8; border-radius:16px 16px 0 0;">
-        <i class="bi bi-camera display-3" style="color:#cbd5e0;"></i>
+        {% if materiel.domaine == 'terrain' %}
+          <i class="bi bi-geo-alt display-3" style="color:#cbd5e0;"></i>
+        {% else %}
+          <i class="bi bi-building display-3" style="color:#cbd5e0;"></i>
+        {% endif %}
       </div>
       {% endif %}
       <div class="card-body">
@@ -82,9 +90,18 @@
         <p class="text-muted small mb-1">
           <i class="bi bi-tag me-1"></i>{{ materiel.categorie }}
         </p>
-        <p class="text-muted small mb-2">
+        <p class="text-muted small mb-1">
           <i class="bi bi-hash me-1"></i>{{ materiel.numero_serie }}
         </p>
+        {% if user.role == 'admin' %}
+        <p class="text-muted small mb-2">
+          {% if materiel.domaine == 'terrain' %}
+            <span class="badge bg-warning text-dark">🏗️ Terrain</span>
+          {% else %}
+            <span class="badge bg-info text-dark">🏢 Bureau</span>
+          {% endif %}
+        </p>
+        {% endif %}
         <p class="card-text small text-muted">
           {{ materiel.description|truncatechars:80 }}
         </p>

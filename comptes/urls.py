@@ -10,4 +10,5 @@ urlpatterns = [
     path('parametres/', views.parametres, name='parametres'),
     path('parametres/profil/', views.modifier_profil, name='modifier_profil'),
     path('parametres/mdp/', views.changer_mdp, name='changer_mdp'),
+    path('choisir-domaine/', views.choisir_domaine, name='choisir_domaine'),
 ]

@@ -18,7 +18,15 @@ def connexion(request):
         if user is not None:
             login(request, user)
             messages.success(request, f'Bienvenue {user.first_name} !')
-            return redirect('tableau_de_bord')
+            # Redirection selon le rôle
+            if user.role == 'admin_terrain':
+                return redirect('liste_materiels')
+            elif user.role == 'admin_bureau':
+                return redirect('liste_materiels')
+            elif user.role == 'admin':
+                return redirect('choisir_domaine')
+            else:
+                return redirect('tableau_de_bord')
         else:
             messages.error(request, 'Nom d\'utilisateur ou mot de passe incorrect.')
     return render(request, 'comptes/connexion.html')
@@ -155,3 +163,9 @@ def changer_mdp(request):
             request.user.save()
             messages.success(request, 'Mot de passe changé avec succès !')
     return redirect('parametres')
+
+@login_required
+def choisir_domaine(request):
+    if request.user.role != 'admin':
+        return redirect('tableau_de_bord')
+    return render(request, 'comptes/choisir_domaine.html')

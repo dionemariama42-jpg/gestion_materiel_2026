@@ -20,7 +20,15 @@ class Materiel(models.Model):
         ('maintenance', 'En maintenance'),
         ('hors_service', 'Hors service'),
     ]
+
+    DOMAINES = [
+    ('terrain', 'Terrain'),
+    ('bureau', 'Bureau'),
+    ]
+
     nom = models.CharField(max_length=200)
+    domaine = models.CharField(max_length=20, choices=DOMAINES, default='bureau')
+    
     categorie = models.ForeignKey(
         Categorie,
         on_delete=models.SET_NULL,
