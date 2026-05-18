@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path("chat/", views.chat, name="chatbot_chat"),
+    path("page/", views.chatbot_page, name="chatbot_page"),
 ]

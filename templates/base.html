@@ -18,7 +18,6 @@
 <!-- ===== SIDEBAR ===== -->
 <div class="sidebar" id="sidebar">
 
-  <!-- Brand -->
   <div class="sidebar-brand">
     <div class="sidebar-brand-icon">
       <i class="bi bi-hexagon-fill"></i>
@@ -29,7 +28,6 @@
     </div>
   </div>
 
-  <!-- Navigation -->
   <nav class="sidebar-nav">
 
     <div class="nav-section">Principal</div>
@@ -71,6 +69,13 @@
       <span class="nav-label">Calendrier</span>
     </a>
 
+    {% if user.is_authenticated %}
+    <a href="{% url 'chatbot_page' %}" class="sidebar-link" data-label="Assistant IA">
+      <i class="bi bi-robot"></i>
+      <span class="nav-label">Assistant IA 🤖</span>
+    </a>
+    {% endif %}
+
     <div class="nav-section">Clubs</div>
 
     <a href="{% url 'liste_clubs' %}" class="sidebar-link" data-label="Clubs">
@@ -83,11 +88,19 @@
     </a>
 
     {% if user.is_authenticated %}
-    {% if user.role == 'admin' %}
+
+    {% if user.role == 'admin' or user.role == 'admin_terrain' or user.role == 'admin_bureau' %}
     <div class="nav-section">Administration</div>
+    {% endif %}
+
+    {% if user.role == 'admin' %}
     <a href="{% url 'dashboard_admin' %}" class="sidebar-link" data-label="Dashboard admin">
       <i class="bi bi-activity"></i>
       <span class="nav-label">Dashboard admin</span>
+    </a>
+    <a href="{% url 'choisir_domaine' %}" class="sidebar-link" data-label="Choisir domaine">
+      <i class="bi bi-grid"></i>
+      <span class="nav-label">Choisir domaine</span>
     </a>
     <a href="{% url 'carte_admin' %}" class="sidebar-link" data-label="Carte globale">
       <i class="bi bi-map"></i>
@@ -96,6 +109,24 @@
     <a href="/admin/" class="sidebar-link" data-label="Administration">
       <i class="bi bi-shield-lock"></i>
       <span class="nav-label">Administration</span>
+    </a>
+    {% endif %}
+
+    {% if user.role == 'admin_terrain' %}
+    <a href="{% url 'liste_materiels' %}" class="sidebar-link" data-label="Matériels Terrain">
+      <i class="bi bi-geo-alt"></i>
+      <span class="nav-label">🏗️ Matériels Terrain</span>
+    </a>
+    <a href="{% url 'carte_admin' %}" class="sidebar-link" data-label="Carte globale">
+      <i class="bi bi-map"></i>
+      <span class="nav-label">Carte globale</span>
+    </a>
+    {% endif %}
+
+    {% if user.role == 'admin_bureau' %}
+    <a href="{% url 'liste_materiels' %}" class="sidebar-link" data-label="Matériels Bureau">
+      <i class="bi bi-building"></i>
+      <span class="nav-label">🏢 Matériels Bureau</span>
     </a>
     {% endif %}
 
@@ -128,7 +159,6 @@
 
   </nav>
 
-  <!-- Bouton fermer/ouvrir en bas -->
   <div class="sidebar-toggle-btn">
     <button class="toggle-btn" id="toggleSidebarBtn" title="Réduire le menu">
       <i class="bi bi-chevron-left" id="toggleIcon"></i>
@@ -137,13 +167,11 @@
 
 </div>
 
-<!-- Overlay mobile -->
 <div class="sidebar-overlay" id="overlay" onclick="closeMobileSidebar()"></div>
 
 <!-- ===== TOPBAR ===== -->
 <div class="topbar" id="topbar">
   <div class="d-flex align-items-center gap-3">
-    <!-- Hamburger mobile -->
     <button class="hamburger" onclick="openMobileSidebar()">
       <i class="bi bi-list"></i>
     </button>
@@ -153,6 +181,10 @@
   <div class="topbar-right">
     {% if user.is_authenticated %}
 
+    <a href="{% url 'chatbot_page' %}" class="topbar-btn" title="Assistant IA">
+      <i class="bi bi-robot"></i>
+    </a>
+
     <a href="{% url 'mes_notifications' %}" class="topbar-btn position-relative" title="Notifications">
       <i class="bi bi-bell"></i>
       <span class="notif-badge" id="notif-badge" style="display:none;"></span>
@@ -161,6 +193,18 @@
     {% if user.role == 'admin' %}
     <a href="{% url 'dashboard_admin' %}" class="topbar-btn" title="Dashboard Admin">
       <i class="bi bi-activity"></i>
+    </a>
+    {% endif %}
+
+    {% if user.role == 'admin_terrain' %}
+    <a href="{% url 'liste_materiels' %}" class="topbar-btn" title="Matériels Terrain">
+      <i class="bi bi-geo-alt"></i>
+    </a>
+    {% endif %}
+
+    {% if user.role == 'admin_bureau' %}
+    <a href="{% url 'liste_materiels' %}" class="topbar-btn" title="Matériels Bureau">
+      <i class="bi bi-building"></i>
     </a>
     {% endif %}
 
@@ -175,7 +219,9 @@
           </div>
           <div style="margin-top: 4px;">
             <span style="background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">
-              {{ user.role }}
+              {% if user.role == 'admin_terrain' %}🏗️ Admin Terrain
+              {% elif user.role == 'admin_bureau' %}🏢 Admin Bureau
+              {% else %}{{ user.role }}{% endif %}
             </span>
           </div>
         </li>
@@ -187,6 +233,11 @@
         <li>
           <a class="dropdown-item" href="{% url 'parametres' %}">
             <i class="bi bi-sliders me-2"></i>Paramètres
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'chatbot_page' %}">
+            <i class="bi bi-robot me-2"></i>Assistant IA
           </a>
         </li>
         {% if user.role == 'admin' %}
@@ -253,7 +304,6 @@
   const toggleIcon = document.getElementById('toggleIcon');
   const overlay = document.getElementById('overlay');
 
-  // ---- Sidebar collapsible (desktop) ----
   let isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
 
   function applyCollapsed() {
@@ -280,7 +330,6 @@
     applyCollapsed();
   });
 
-  // ---- Sidebar mobile ----
   function openMobileSidebar() {
     sidebar.classList.add('open');
     overlay.classList.add('open');
@@ -291,7 +340,6 @@
     overlay.classList.remove('open');
   }
 
-  // ---- Active link ----
   (function () {
     const links = document.querySelectorAll('.sidebar-link');
     const path = window.location.pathname;

@@ -1,424 +1,91 @@
 {% load static %}
-
-<!-- ═══════════════════════════════════════════════════════════
-     CHATBOT ASSISTANT IA — Gestion Matériel 2026
-     À inclure juste avant </body> dans votre base.html
-     ═══════════════════════════════════════════════════════════ -->
-
 <style>
-  /* ── Variables ─────────────────────────────────────────── */
-  :root {
-    --cb-primary:    #1a56db;
-    --cb-primary-dk: #1340b0;
-    --cb-surface:    #ffffff;
-    --cb-bg:         #f0f4ff;
-    --cb-border:     #dde3f5;
-    --cb-text:       #1e293b;
-    --cb-muted:      #64748b;
-    --cb-bot-bg:     #eef2ff;
-    --cb-user-bg:    #1a56db;
-    --cb-shadow:     0 8px 40px rgba(26,86,219,.18);
-    --cb-radius:     18px;
-    --cb-btn-size:   60px;
-  }
-
-  /* ── Toggle button ─────────────────────────────────────── */
   #cb-toggle {
     position: fixed;
     bottom: 28px;
     right: 28px;
-    width: var(--cb-btn-size);
-    height: var(--cb-btn-size);
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: var(--cb-primary);
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--cb-shadow);
+    box-shadow: 0 8px 24px rgba(29,78,216,0.35);
     z-index: 9998;
-    transition: transform .2s, background .2s;
+    transition: transform .2s, box-shadow .2s;
+    text-decoration: none;
+    color: white;
+    font-size: 24px;
   }
-  #cb-toggle:hover { background: var(--cb-primary-dk); transform: scale(1.07); }
-  #cb-toggle svg   { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-  /* Badge pulse */
+  #cb-toggle:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 12px 32px rgba(29,78,216,0.45);
+  }
   #cb-badge {
     position: absolute;
     top: 0; right: 0;
     width: 14px; height: 14px;
-    background: #ef4444;
+    background: #22c55e;
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 2px solid white;
     animation: cb-pulse 2s infinite;
   }
   @keyframes cb-pulse {
     0%,100% { transform: scale(1); opacity: 1; }
-    50%      { transform: scale(1.25); opacity: .7; }
+    50% { transform: scale(1.3); opacity: 0.7; }
   }
-
-  /* ── Panel ─────────────────────────────────────────────── */
-  #cb-panel {
+  #cb-tooltip {
     position: fixed;
-    bottom: 100px;
+    bottom: 96px;
     right: 28px;
-    width: 370px;
-    max-height: 560px;
-    background: var(--cb-surface);
-    border-radius: var(--cb-radius);
-    box-shadow: var(--cb-shadow);
-    display: flex;
-    flex-direction: column;
-    z-index: 9999;
-    overflow: hidden;
-    transform: translateY(20px) scale(.96);
-    opacity: 0;
-    pointer-events: none;
-    transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
-  }
-  #cb-panel.open {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  /* Header */
-  #cb-header {
-    background: var(--cb-primary);
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-  }
-  #cb-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-  #cb-header-info { flex: 1; }
-  #cb-header-name { color: #fff; font-weight: 700; font-size: 15px; font-family: 'Segoe UI', sans-serif; }
-  #cb-header-status { color: rgba(255,255,255,.75); font-size: 12px; display: flex; align-items: center; gap: 5px; }
-  #cb-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; display: inline-block; }
-  #cb-close-btn {
-    background: rgba(255,255,255,.15); border: none; cursor: pointer;
-    color: #fff; border-radius: 50%; width: 30px; height: 30px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; transition: background .2s;
-  }
-  #cb-close-btn:hover { background: rgba(255,255,255,.3); }
-
-  /* Messages */
-  #cb-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    background: var(--cb-bg);
-    scroll-behavior: smooth;
-  }
-  #cb-messages::-webkit-scrollbar { width: 4px; }
-  #cb-messages::-webkit-scrollbar-track { background: transparent; }
-  #cb-messages::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
-
-  .cb-msg {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    animation: cb-slide-in .22s ease;
-  }
-  @keyframes cb-slide-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .cb-msg.user { flex-direction: row-reverse; }
-
-  .cb-bubble {
-    max-width: 78%;
-    padding: 10px 14px;
-    border-radius: 16px;
-    font-size: 14px;
-    line-height: 1.5;
-    font-family: 'Segoe UI', sans-serif;
-    color: var(--cb-text);
-    white-space: pre-wrap;
-  }
-  .cb-msg.bot  .cb-bubble { background: var(--cb-bot-bg); border-bottom-left-radius: 4px; }
-  .cb-msg.user .cb-bubble { background: var(--cb-user-bg); color: #fff; border-bottom-right-radius: 4px; }
-
-  .cb-mini-avatar {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: var(--cb-primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
-  }
-  .cb-msg.user .cb-mini-avatar { background: #cbd5e1; color: var(--cb-text); }
-
-  /* Typing dots */
-  #cb-typing { display: none; }
-  #cb-typing.active { display: flex; }
-  .cb-typing-dots {
-    display: flex; gap: 4px; padding: 10px 14px;
-    background: var(--cb-bot-bg); border-radius: 16px; border-bottom-left-radius: 4px;
-  }
-  .cb-typing-dots span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--cb-primary); opacity: .4;
-    animation: cb-dot .8s infinite;
-  }
-  .cb-typing-dots span:nth-child(2) { animation-delay: .15s; }
-  .cb-typing-dots span:nth-child(3) { animation-delay: .30s; }
-  @keyframes cb-dot {
-    0%,80%,100% { transform: scale(.7); opacity: .4; }
-    40%          { transform: scale(1);  opacity: 1; }
-  }
-
-  /* Quick replies */
-  #cb-quick-replies {
-    padding: 8px 16px 4px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    background: var(--cb-bg);
-    flex-shrink: 0;
-  }
-  .cb-qr {
-    background: #fff;
-    border: 1.5px solid var(--cb-border);
-    color: var(--cb-primary);
-    font-size: 12px;
-    font-family: 'Segoe UI', sans-serif;
-    padding: 5px 11px;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
+    background: white;
+    border: 1.5px solid #e0e7ff;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #1e293b;
+    box-shadow: 0 8px 24px rgba(29,78,216,0.12);
+    z-index: 9997;
     white-space: nowrap;
+    animation: tooltip-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    border-left: 3px solid #1d4ed8;
   }
-  .cb-qr:hover { background: var(--cb-bot-bg); border-color: var(--cb-primary); }
-
-  /* Input */
-  #cb-footer {
-    padding: 12px 14px;
-    background: var(--cb-surface);
-    border-top: 1px solid var(--cb-border);
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
+  #cb-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; right: 20px;
+    width: 14px; height: 14px;
+    background: white;
+    border-right: 1.5px solid #e0e7ff;
+    border-bottom: 1.5px solid #e0e7ff;
+    transform: rotate(45deg);
   }
-  #cb-input {
-    flex: 1;
-    border: 1.5px solid var(--cb-border);
-    border-radius: 24px;
-    padding: 9px 16px;
-    font-size: 14px;
-    font-family: 'Segoe UI', sans-serif;
-    color: var(--cb-text);
-    outline: none;
-    resize: none;
-    height: 40px;
-    max-height: 100px;
-    overflow-y: auto;
-    transition: border-color .2s;
-    background: var(--cb-bg);
-  }
-  #cb-input:focus { border-color: var(--cb-primary); background: #fff; }
-  #cb-input::placeholder { color: var(--cb-muted); }
-
-  #cb-send {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: var(--cb-primary);
-    border: none;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    transition: background .2s, transform .15s;
-  }
-  #cb-send:hover { background: var(--cb-primary-dk); transform: scale(1.05); }
-  #cb-send:disabled { background: var(--cb-border); cursor: not-allowed; transform: none; }
-  #cb-send svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-
-  /* Responsive */
-  @media (max-width: 440px) {
-    #cb-panel { width: calc(100vw - 20px); right: 10px; bottom: 90px; }
-    #cb-toggle { right: 16px; bottom: 16px; }
+  @keyframes tooltip-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 </style>
 
-<!-- Toggle Button -->
-<button id="cb-toggle" aria-label="Ouvrir l'assistant">
-  <span id="cb-badge"></span>
-  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-</button>
-
-<!-- Chat Panel -->
-<div id="cb-panel" role="dialog" aria-label="Assistant IA">
-
-  <div id="cb-header">
-    <div id="cb-avatar">🤖</div>
-    <div id="cb-header-info">
-      <div id="cb-header-name">Assistant Matériel</div>
-      <div id="cb-header-status"><span id="cb-dot"></span> En ligne — répond en quelques secondes</div>
-    </div>
-    <button id="cb-close-btn" aria-label="Fermer">✕</button>
-  </div>
-
-  <div id="cb-messages">
-    <!-- Message de bienvenue -->
-    <div class="cb-msg bot">
-      <div class="cb-mini-avatar">🤖</div>
-      <div class="cb-bubble">Bonjour ! 👋 Je suis votre assistant pour l'application <strong>Gestion de Matériel 2026</strong>.<br><br>Je peux vous aider à :<br>• 📦 Comprendre comment utiliser les matériels<br>• 🖥️ Naviguer dans l'application<br>• ❓ Répondre à vos questions<br><br>Comment puis-je vous aider ?</div>
-    </div>
-
-    <!-- Typing indicator -->
-    <div class="cb-msg bot" id="cb-typing">
-      <div class="cb-mini-avatar">🤖</div>
-      <div class="cb-typing-dots">
-        <span></span><span></span><span></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Quick replies -->
-  <div id="cb-quick-replies">
-    <button class="cb-qr" data-msg="Comment faire un emprunt ?">📋 Faire un emprunt</button>
-    <button class="cb-qr" data-msg="Comment voir les matériels disponibles ?">📦 Matériels dispo</button>
-    <button class="cb-qr" data-msg="Comment créer un compte ?">👤 Créer un compte</button>
-    <button class="cb-qr" data-msg="Comment retourner un matériel emprunté ?">↩️ Retourner un matériel</button>
-    <button class="cb-qr" data-msg="Que puis-je faire sur le tableau de bord ?">📊 Dashboard</button>
-  </div>
-
-  <div id="cb-footer">
-    <textarea id="cb-input" placeholder="Posez votre question…" rows="1" aria-label="Message"></textarea>
-    <button id="cb-send" aria-label="Envoyer">
-      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-    </button>
-  </div>
+<!-- Tooltip -->
+<div id="cb-tooltip" style="display:none;">
+  🤖 Besoin d'aide ? Je suis là !
 </div>
 
+<!-- Bouton flottant -->
+<a id="cb-toggle" href="{% url 'chatbot_page' %}" title="Assistant IA">
+  <span id="cb-badge"></span>
+  🤖
+</a>
+
 <script>
-(function () {
-  const panel    = document.getElementById('cb-panel');
-  const toggle   = document.getElementById('cb-toggle');
-  const closeBtn = document.getElementById('cb-close-btn');
-  const messages = document.getElementById('cb-messages');
-  const input    = document.getElementById('cb-input');
-  const sendBtn  = document.getElementById('cb-send');
-  const typing   = document.getElementById('cb-typing');
-  const badge    = document.getElementById('cb-badge');
-  const qrs      = document.querySelectorAll('.cb-qr');
-
-  let history = [];
-  let isOpen  = false;
-
-  // Toggle panel
-  function openPanel()  { panel.classList.add('open'); isOpen = true; badge.style.display = 'none'; input.focus(); }
-  function closePanel() { panel.classList.remove('open'); isOpen = false; }
-
-  toggle.addEventListener('click', () => isOpen ? closePanel() : openPanel());
-  closeBtn.addEventListener('click', closePanel);
-
-  // Quick replies
-  qrs.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const msg = btn.dataset.msg;
-      sendMessage(msg);
-    });
-  });
-
-  // Input auto-resize
-  input.addEventListener('input', () => {
-    input.style.height = '40px';
-    input.style.height = Math.min(input.scrollHeight, 100) + 'px';
-  });
-
-  // Send on Enter (Shift+Enter = newline)
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); triggerSend(); }
-  });
-  sendBtn.addEventListener('click', triggerSend);
-
-  function triggerSend() {
-    const text = input.value.trim();
-    if (!text) return;
-    input.value = '';
-    input.style.height = '40px';
-    sendMessage(text);
-  }
-
-  function addMessage(role, text) {
-    // Remove typing indicator first if present
-    if (role === 'bot') typing.classList.remove('active');
-
-    const wrap = document.createElement('div');
-    wrap.className = `cb-msg ${role === 'user' ? 'user' : 'bot'}`;
-
-    const avatar = document.createElement('div');
-    avatar.className = 'cb-mini-avatar';
-    avatar.textContent = role === 'user' ? '👤' : '🤖';
-
-    const bubble = document.createElement('div');
-    bubble.className = 'cb-bubble';
-    bubble.textContent = text;
-
-    wrap.appendChild(avatar);
-    wrap.appendChild(bubble);
-
-    // Insert before typing indicator
-    messages.insertBefore(wrap, typing);
-    scrollBottom();
-  }
-
-  function scrollBottom() {
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  async function sendMessage(text) {
-    if (!text) return;
-
-    addMessage('user', text);
-    history.push({ role: 'user', content: text });
-
-    // Show typing
-    typing.classList.add('active');
-    messages.appendChild(typing); // move to end
-    scrollBottom();
-    sendBtn.disabled = true;
-
-    try {
-      const resp = await fetch('/chatbot/chat/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ messages: history })
-      });
-
-      const data = await resp.json();
-      const reply = data.reply || data.error || "Désolé, une erreur est survenue.";
-
-      history.push({ role: 'assistant', content: reply });
-      addMessage('bot', reply);
-
-    } catch (err) {
-      addMessage('bot', "❌ Impossible de contacter le serveur. Veuillez réessayer.");
-      typing.classList.remove('active');
-    }
-
-    sendBtn.disabled = false;
-    input.focus();
-  }
-
-  function getCookie(name) {
-    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return v ? v[2] : '';
-  }
-
-  // Show badge after 3s if panel not opened yet
-  setTimeout(() => { if (!isOpen) badge.style.display = 'block'; }, 3000);
-})();
+// Afficher le tooltip après 4 secondes
+setTimeout(() => {
+  const tooltip = document.getElementById('cb-tooltip');
+  tooltip.style.display = 'block';
+  setTimeout(() => { tooltip.style.display = 'none'; }, 5000);
+}, 4000);
 </script>

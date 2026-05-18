@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:pk>/positions/', views.get_positions, name='get_positions'),
     path('carte-admin/', views.carte_admin, name='carte_admin'),
     path('suivi-mobile/<int:pk>/', views.suivi_mobile, name='suivi_mobile'),
+    path('debloquer/<int:user_id>/', views.debloquer_utilisateur, name='debloquer_utilisateur'),
 ]

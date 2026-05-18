@@ -92,6 +92,9 @@ def inscription(request):
 @login_required
 def tableau_de_bord(request):
     from emprunts.models import Demande
+    from materiel.models import Materiel
+
+    # Stats communes
     demandes = Demande.objects.filter(utilisateur=request.user).order_by('-date_demande')
     contexte = {
         'demandes': demandes,
@@ -100,8 +103,37 @@ def tableau_de_bord(request):
         'en_attente': demandes.filter(statut='en_attente').count(),
         'score': request.user.get_score_fiabilite(),
     }
-    return render(request, 'comptes/tableau_de_bord.html', contexte)
 
+    # Stats admin terrain
+    if request.user.role == 'admin_terrain':
+        materiels_terrain = Materiel.objects.filter(domaine='terrain')
+        contexte.update({
+            'total_materiels': materiels_terrain.count(),
+            'materiels_disponibles': materiels_terrain.filter(etat='disponible').count(),
+            'materiels_empruntes': materiels_terrain.filter(etat='emprunte').count(),
+            'materiels_maintenance': materiels_terrain.filter(etat='maintenance').count(),
+            'demandes_domaine': Demande.objects.filter(
+                lignes__materiel__domaine='terrain'
+            ).distinct().order_by('-date_demande')[:10],
+        })
+        return render(request, 'comptes/tableau_de_bord_terrain.html', contexte)
+
+    # Stats admin bureau
+    elif request.user.role == 'admin_bureau':
+        materiels_bureau = Materiel.objects.filter(domaine='bureau')
+        contexte.update({
+            'total_materiels': materiels_bureau.count(),
+            'materiels_disponibles': materiels_bureau.filter(etat='disponible').count(),
+            'materiels_empruntes': materiels_bureau.filter(etat='emprunte').count(),
+            'materiels_maintenance': materiels_bureau.filter(etat='maintenance').count(),
+            'demandes_domaine': Demande.objects.filter(
+                lignes__materiel__domaine='bureau'
+            ).distinct().order_by('-date_demande')[:10],
+        })
+        return render(request, 'comptes/tableau_de_bord_bureau.html', contexte)
+
+    # Dashboard normal
+    return render(request, 'comptes/tableau_de_bord.html', contexte)
 
 @login_required
 def parametres(request):
